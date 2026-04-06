@@ -8,11 +8,23 @@ def test_ci_health_workflow_run_is_rerun_only_and_context_aware() -> None:
 
     assert 'workflows:\n      - "🚀 Integration CI — Insight Demo"\n      - "✅ PR CI"' in workflow
     assert 'HARD_WORKFLOW="pr-ci.yml"' in workflow
-    assert 'if [[ "$source_workflow" == "🚀 Integration CI — Insight Demo" ]]; then' in workflow
-    assert 'HARD_WORKFLOW="ci.yml"' in workflow
+
+    workflow_run_block = """
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            source_workflow=$(jq -r '.workflow_run.name // empty' "$GITHUB_EVENT_PATH")
+            if [[ "$source_workflow" == "🚀 Integration CI — Insight Demo" ]]; then
+              HARD_WORKFLOW="ci.yml"
+            fi
+            # A completed workflow_run already guarantees a concrete run exists.
+            # Avoid extra dispatches in this context and only rerun failed runs.
+            DISPATCH_ARGS=()
+            # Repo-Healer marks run_attempt<2 as report-only; keep one automatic rerun
+            # path for failed workflow_run contexts so AUTOPATCH_SAFE can activate.
+            RERUN_ARGS+=("--rerun-failed")
+          fi
+    """.strip()
+    assert workflow_run_block in workflow
     assert "DISPATCH_ARGS=(--dispatch-missing)" in workflow
-    assert "DISPATCH_ARGS=()" in workflow
-    assert 'RERUN_ARGS+=("--rerun-failed")' in workflow
 
 
 def test_ci_health_uses_required_checks_file_for_branch_protection_apply() -> None:

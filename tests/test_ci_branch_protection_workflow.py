@@ -12,6 +12,14 @@ def test_branch_protection_job_uses_admin_token_only_for_apply() -> None:
         "GITHUB_TOKEN: ${{ secrets.ADMIN_GITHUB_TOKEN != '' && secrets.ADMIN_GITHUB_TOKEN || github.token }}"
         in workflow
     )
-    assert 'apply_flag="--apply"' in workflow
-    assert "ADMIN_GITHUB_TOKEN not set; running read-only branch protection check with default token." in workflow
+
+    guarded_apply_block = """
+          apply_flag=""
+          if [ -n "${ADMIN_GITHUB_TOKEN}" ]; then
+            apply_flag="--apply"
+          else
+            echo "::notice::ADMIN_GITHUB_TOKEN not set; running read-only branch protection check with default token."
+          fi
+    """.strip()
+    assert guarded_apply_block in workflow
     assert "--required-checks-file scripts/required_checks.json" in workflow
