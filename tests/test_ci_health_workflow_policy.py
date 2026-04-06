@@ -32,7 +32,7 @@ def test_ci_health_uses_apply_on_verify_branch_protection_call() -> None:
     lines = workflow.splitlines()
 
     verify_idx = next(i for i, line in enumerate(lines) if "python scripts/verify_branch_protection.py" in line)
-    call_window = "\n".join(lines[verify_idx : verify_idx + 6])
+    call_window = "\n".join(lines[slice(verify_idx, verify_idx + 6)])
 
     assert '--branch "${CI_POLICY_BRANCH}"' in call_window
     assert "--apply" in call_window
