@@ -11,13 +11,15 @@ def test_setup_node_cache_path_lifecycle_is_preserved() -> None:
     assert "mkdir -p \"$NPM_CONFIG_CACHE\"" in workflow
 
     lines = workflow.splitlines()
-    tests_job_idx = next(i for i, line in enumerate(lines) if 'name: "✅ Pytest (${{ matrix.python-version }})"' in line)
-    ensure_idx = next(
-        i for i, line in enumerate(lines) if i > tests_job_idx and "name: Ensure npm cache path lifecycle contract" in line
-    )
-    setup_node_idx = next(i for i, line in enumerate(lines) if i > tests_job_idx and "uses: actions/setup-node@" in line)
-    cleanup_idx = next(i for i, line in enumerate(lines) if i > tests_job_idx and "rm -rf \"$NPM_CONFIG_CACHE\"" in line)
-    recreate_idx = next(i for i, line in enumerate(lines) if i > cleanup_idx and "mkdir -p \"$NPM_CONFIG_CACHE\"" in line)
+    tests_job_header_idx = next(i for i, line in enumerate(lines) if line.startswith("  tests:"))
+    windows_job_header_idx = next(i for i, line in enumerate(lines) if i > tests_job_header_idx and line.startswith("  windows-smoke:"))
+    tests_job_lines = lines[tests_job_header_idx:windows_job_header_idx]
+
+    tests_job_idx = next(i for i, line in enumerate(tests_job_lines) if 'name: "✅ Pytest (${{ matrix.python-version }})"' in line)
+    ensure_idx = next(i for i, line in enumerate(tests_job_lines) if i > tests_job_idx and "Ensure npm cache path lifecycle contract" in line)
+    setup_node_idx = next(i for i, line in enumerate(tests_job_lines) if i > tests_job_idx and "uses: actions/setup-node@" in line)
+    cleanup_idx = next(i for i, line in enumerate(tests_job_lines) if i > tests_job_idx and 'rm -rf "$NPM_CONFIG_CACHE"' in line)
+    recreate_idx = next(i for i, line in enumerate(tests_job_lines) if i > cleanup_idx and 'mkdir -p "$NPM_CONFIG_CACHE"' in line)
 
     assert tests_job_idx < ensure_idx < setup_node_idx
     assert cleanup_idx < recreate_idx
