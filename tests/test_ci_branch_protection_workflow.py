@@ -12,23 +12,26 @@ def test_branch_protection_job_uses_admin_token_only_for_apply() -> None:
         "GITHUB_TOKEN: ${{ secrets.ADMIN_GITHUB_TOKEN != '' && secrets.ADMIN_GITHUB_TOKEN || github.token }}"
         in workflow
     )
-
-    guard_line = 'if [ -n "${ADMIN_GITHUB_TOKEN}" ]; then'
-    apply_line = 'apply_flag="--apply"'
-    notice_line = "ADMIN_GITHUB_TOKEN not set; running read-only branch protection check with default token."
-    verify_line = "python scripts/verify_branch_protection.py"
-
-    assert guard_line in workflow
-    assert apply_line in workflow
-    assert notice_line in workflow
-    assert verify_line in workflow
+    assert "python scripts/verify_branch_protection.py" in workflow
     assert '--branch "${TARGET_BRANCH}"' in workflow
     assert "${apply_flag}" in workflow
     assert "--required-checks-file scripts/required_checks.json" in workflow
 
-    guard_pos = workflow.index(guard_line)
-    apply_pos = workflow.index(apply_line, guard_pos)
-    verify_pos = workflow.index(verify_line, apply_pos)
-    apply_flag_use_pos = workflow.index("${apply_flag}", verify_pos)
+    lines = workflow.splitlines()
+    guard_idx = next(i for i, line in enumerate(lines) if 'if [ -n "${ADMIN_GITHUB_TOKEN}" ]; then' in line)
+    else_idx = next(i for i, line in enumerate(lines[guard_idx + 1 :], start=guard_idx + 1) if line.strip() == "else")
+    fi_idx = next(i for i, line in enumerate(lines[else_idx + 1 :], start=else_idx + 1) if line.strip() == "fi")
 
-    assert guard_pos < apply_pos < verify_pos < apply_flag_use_pos
+    then_block = "\n".join(lines[guard_idx + 1 : else_idx])
+    else_block = "\n".join(lines[else_idx + 1 : fi_idx])
+    post_guard_block = "\n".join(lines[fi_idx + 1 :])
+
+    assert 'apply_flag="--apply"' in then_block
+    assert 'apply_flag="--apply"' not in else_block
+    assert 'apply_flag="--apply"' not in post_guard_block
+    assert "ADMIN_GITHUB_TOKEN not set; running read-only branch protection check with default token." in else_block
+
+    verify_idx = next(i for i, line in enumerate(lines[fi_idx + 1 :], start=fi_idx + 1) if "python scripts/verify_branch_protection.py" in line)
+    apply_flag_use_idx = next(i for i, line in enumerate(lines[verify_idx + 1 :], start=verify_idx + 1) if "${apply_flag}" in line)
+
+    assert guard_idx < else_idx < fi_idx < verify_idx < apply_flag_use_idx

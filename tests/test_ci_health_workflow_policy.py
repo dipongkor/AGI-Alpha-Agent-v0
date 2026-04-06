@@ -27,10 +27,13 @@ def test_ci_health_workflow_run_is_rerun_only_and_context_aware() -> None:
     assert "DISPATCH_ARGS=(--dispatch-missing)" in workflow
 
 
-def test_ci_health_uses_required_checks_file_for_branch_protection_apply() -> None:
+def test_ci_health_uses_apply_on_verify_branch_protection_call() -> None:
     workflow = Path(".github/workflows/ci-health.yml").read_text(encoding="utf-8")
+    lines = workflow.splitlines()
 
-    assert "python scripts/verify_branch_protection.py \\" in workflow
-    assert '--branch "${CI_POLICY_BRANCH}"' in workflow
-    assert "--apply" in workflow
-    assert "--required-checks-file scripts/required_checks.json" in workflow
+    verify_idx = next(i for i, line in enumerate(lines) if "python scripts/verify_branch_protection.py" in line)
+    call_window = "\n".join(lines[verify_idx : verify_idx + 6])
+
+    assert '--branch "${CI_POLICY_BRANCH}"' in call_window
+    assert "--apply" in call_window
+    assert "--required-checks-file scripts/required_checks.json" in call_window
