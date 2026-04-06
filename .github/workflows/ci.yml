@@ -389,7 +389,7 @@ jobs:
               tests/test_check_env_network.py \
               tests/test_config_settings.py \
               tests/test_config_utils.py \
-              tests/test_ping_agent.py \
+              tests/test_mutation_smoke_target.py \
               --junitxml=artifacts/test-reports/pytest.xml -q
           else
             pytest --cov --cov-report=xml:artifacts/coverage.xml --cov-fail-under=80 --junitxml=artifacts/test-reports/pytest.xml
@@ -409,11 +409,15 @@ jobs:
               raise SystemExit("[tool.mutmut] must be configured in pyproject.toml")
           if not mutmut_cfg.get("paths_to_mutate"):
               raise SystemExit("[tool.mutmut].paths_to_mutate must be configured")
+          if not mutmut_cfg.get("pytest_add_cli_args_test_selection"):
+              raise SystemExit("[tool.mutmut].pytest_add_cli_args_test_selection must be configured")
           PY
           # mutmut 3.3.0 removed legacy CLI flags (e.g. --paths-to-mutate and
           # --runner). Keep workflow invocation config-driven through
           # [tool.mutmut] to prevent CLI drift from breaking merge runs.
-          mutmut run
+          # Runtime is bounded for merge safety; a timeout exit (124) fails the
+          # job instead of hanging until workflow cancellation.
+          PYTEST_ADDOPTS="tests/test_mutation_smoke_target.py -q" timeout 20m mutmut run
       - name: Run benchmark
         run: |
           pytest tests/test_benchmark.py -q

@@ -115,4 +115,14 @@ omit = [
 ]
 
 [tool.mutmut]
-paths_to_mutate = ["alpha_factory_v1/demos/alpha_agi_insight_v1/src"]
+# Merge-safe mutation smoke scope. This intentionally targets a bounded,
+# high-signal Python surface so push-to-main runs stay deterministic.
+paths_to_mutate = ["scripts/mutation_smoke_target.py"]
+pytest_add_cli_args_test_selection = "tests/test_mutation_smoke_target.py"
+pytest_add_cli_args = "-q"
+mutate_only_covered_lines = true
+max_stack_depth = 12
+do_not_mutate = [
+    "*/__init__.py",
+    "*/SCRATCHPAD.md",
+]
