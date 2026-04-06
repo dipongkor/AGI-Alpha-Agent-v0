@@ -308,6 +308,12 @@ jobs:
           pip install -r requirements.lock
           pip install -r requirements-dev.lock
           pip install -r alpha_factory_v1/backend/requirements-lock.txt
+      - name: Ensure npm cache path lifecycle contract
+        shell: bash
+        run: |
+          # setup-node's post step saves whatever cache path is configured in
+          # NPM_CONFIG_CACHE. The directory must exist at job teardown time.
+          mkdir -p "$NPM_CONFIG_CACHE"
       - name: Verify environment
         shell: bash
         run: |
@@ -373,7 +379,6 @@ jobs:
           python -m pip cache purge
           rm -rf alpha_factory_v1/demos/alpha_agi_insight_v1/insight_browser_v1/node_modules
           rm -rf alpha_factory_v1/core/interface/web_client/node_modules
-          rm -rf "$NPM_CONFIG_CACHE"
           rm -rf ~/.cache/pip ~/.cache/pypoetry ~/.cache/node-gyp
           df -h
       - name: Run tests with coverage
@@ -862,7 +867,6 @@ jobs:
           set -euo pipefail
           rm -rf alpha_factory_v1/demos/alpha_agi_insight_v1/insight_browser_v1/node_modules
           rm -rf alpha_factory_v1/core/interface/web_client/node_modules
-          rm -rf "$NPM_CONFIG_CACHE"
           rm -rf .cache/pre-commit
           rm -rf ~/.cache/pip ~/.cache/pypoetry ~/.cache/node-gyp
           df -h
