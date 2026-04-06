@@ -389,7 +389,7 @@ jobs:
               tests/test_check_env_network.py \
               tests/test_config_settings.py \
               tests/test_config_utils.py \
-              tests/test_mutation_smoke_target.py \
+              tests/test_ping_agent.py \
               --junitxml=artifacts/test-reports/pytest.xml -q
           else
             pytest --cov --cov-report=xml:artifacts/coverage.xml --cov-fail-under=80 --junitxml=artifacts/test-reports/pytest.xml
