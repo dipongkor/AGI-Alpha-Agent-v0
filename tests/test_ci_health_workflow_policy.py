@@ -31,4 +31,6 @@ def test_ci_health_uses_required_checks_file_for_branch_protection_apply() -> No
     workflow = Path(".github/workflows/ci-health.yml").read_text(encoding="utf-8")
 
     assert "python scripts/verify_branch_protection.py \\" in workflow
+    assert '--branch "${CI_POLICY_BRANCH}"' in workflow
+    assert "--apply" in workflow
     assert "--required-checks-file scripts/required_checks.json" in workflow
