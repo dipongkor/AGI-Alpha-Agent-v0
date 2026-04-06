@@ -28,7 +28,7 @@ This workflow intentionally does **not** run on `pull_request` or `merge_group`.
 On `push` to `main`, it runs a **lean integration surface** (owner/actionlint, Linux lint+type and smoke-aligned pytest replay, docs-check).
 On tags/manual dispatch it expands to the full release matrix (dual-version lint/type/test, docs build validation, Docker/signing/deploy path checks).
 Mutation testing in `ci.yml` is config-driven: the workflow always runs `mutmut run` and relies on `[tool.mutmut]` in `pyproject.toml` (no legacy `--paths-to-mutate`/`--runner` flags) so mutmut CLI changes do not break merge runs. For merge safety the mutmut scope is intentionally bounded to `scripts/mutation_smoke_target.py`, uses explicit pytest test-selection fields, mutates covered lines only, and runs under a 20-minute timeout guard. The merge surface pins `mutmut==3.3.0` via `requirements-dev.lock`, and tests assert the lock pin and merge-safe config contract remain intact.
-The merge-surface pytest/docs jobs also enforce an npm cache lifecycle contract: when `actions/setup-node` uses `cache: npm` with `NPM_CONFIG_CACHE`, the directory is created before setup-node and recreated after explicit cache cleanup so setup-node's post-step cache save cannot fail with missing-path validation errors.
+The merge-surface pytest/docs jobs also enforce an npm cache lifecycle contract: when `actions/setup-node` uses `cache: npm` with `NPM_CONFIG_CACHE`, the directory is created before setup-node and is not removed later in the job so setup-node's post-step cache save always has a valid, populated path.
 
 ## Branch protection (required checks)
 
