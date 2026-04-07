@@ -103,6 +103,7 @@ try {
 
 const scriptPath = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(scriptPath), "..", "..", "..", "..");
+const D3_IMPORT_PATTERN = /import\{([^}]+)\}from["']d3["']/g;
 const aliasRoot = path.join(repoRoot, "alpha_factory_v1", "core");
 const quickstartPdf = path.join(repoRoot, manifest.quickstart_pdf);
 const aliasPlugin = {
@@ -113,6 +114,40 @@ const aliasPlugin = {
         }));
     },
 };
+
+function extractD3NamedImports(bundleSource) {
+    const names = new Set();
+    for (const match of bundleSource.matchAll(D3_IMPORT_PATTERN)) {
+        const spec = match[1] || "";
+        for (const rawPart of spec.split(",")) {
+            const part = rawPart.trim();
+            if (!part) continue;
+            const [sourceName] = part.split(/\s+as\s+/);
+            if (/^[A-Za-z_$][\w$]*$/.test(sourceName || "")) {
+                names.add(sourceName);
+            }
+        }
+    }
+    return [...names].sort();
+}
+
+function renderD3BridgeModule(exportNames) {
+    const lines = [
+        "// SPDX-License-Identifier: Apache-2.0",
+        "// Auto-generated D3 ESM bridge for insight.bundle.js imports.",
+        'import "./d3.v7.min.js";',
+        "const d3 = window.d3;",
+        "if (!d3) {",
+        "  throw new Error('d3 global not found');",
+        "}",
+        "",
+    ];
+    for (const name of exportNames) {
+        lines.push(`export const ${name} = d3.${name};`);
+    }
+    lines.push("", "export default d3;", "");
+    return lines.join("\n");
+}
 
 async function ensureWeb3Bundle() {
     const bundlePath = resolveAssetPath(path.join("lib", "bundle.esm.min.js"));
@@ -285,6 +320,12 @@ async function bundle() {
         plugins: [aliasPlugin],
         external: ["d3"],
     });
+    const bundlePath = `${OUT_DIR}/insight.bundle.js`;
+    const d3ExportsPath = path.join(OUT_DIR, "d3.exports.js");
+    const d3ExportsAlias = path.join(OUT_DIR, "d3_exports.js");
+    const d3ExportNames = extractD3NamedImports(await fs.readFile(bundlePath, "utf8"));
+    await fs.writeFile(d3ExportsPath, renderD3BridgeModule(d3ExportNames), "utf8");
+    await fs.copyFile(d3ExportsPath, d3ExportsAlias).catch(() => {});
     execSync(`npx tailwindcss -i style.css -o ${OUT_DIR}/style.css --minify`, {
         stdio: "inherit",
     });
@@ -295,8 +336,6 @@ async function bundle() {
         (otelOrigin ? ` ${otelOrigin}` : "");
     const envScript = injectEnv(process.env);
     await copyAssets(manifest, repoRoot, OUT_DIR, assetRoot);
-    const d3ExportsPath = path.join(OUT_DIR, "d3.exports.js");
-    const d3ExportsAlias = path.join(OUT_DIR, "d3_exports.js");
     if (fsSync.existsSync(d3ExportsPath)) {
         await fs.copyFile(d3ExportsPath, d3ExportsAlias).catch(() => {});
         if (!manifest.precache.includes("d3_exports.js")) {
@@ -349,7 +388,6 @@ async function bundle() {
             `<link rel="preload" href="wasm/pyodide.asm.wasm" as="fetch" type="application/wasm" integrity="${wasmSri}" crossorigin="anonymous" />\n</head>`,
         );
     }
-    const bundlePath = `${OUT_DIR}/insight.bundle.js`;
     let bundleText = await fs.readFile(bundlePath, "utf8");
     bundleText =
         `window.PYODIDE_WASM_BASE64='${wasmBase64}';window.GPT2_MODEL_BASE64='${gpt2Base64}';\n` +
