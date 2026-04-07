@@ -78,7 +78,7 @@ jobs:
       repo_owner_lower: ${{ steps.owner-manual.outputs.repo_owner_lower || steps.owner-auto.outputs.repo_owner_lower }}
     steps:
       # Checkout repository so the local ensure-owner action is available
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
       - id: owner-manual
@@ -108,7 +108,7 @@ jobs:
       checks: write
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Lint workflows
         uses: reviewdog/action-actionlint@437bbe918b0d29544cbf9e8b1d63fe6f4e7a881d # v1
         with:
@@ -127,7 +127,7 @@ jobs:
         python-version: ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/main' && '["3.11"]' || '["3.11","3.12"]') }}
     steps:
       # checkout required for local composite actions
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Check for binary diffs
         run: python scripts/check_no_binary_diff.py
       - name: Ensure pip cache directory
@@ -153,7 +153,7 @@ jobs:
           PY
       - name: Verify $AGIALPHA configuration
         run: python scripts/check_agialpha_config.py
-      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -169,7 +169,7 @@ jobs:
           git --version
 
       - name: Cache pre-commit
-        uses: actions/cache@v5.0.4 # 668228422ae6a00e4ad889ee87cd7109ec5666a7
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: .cache/pre-commit
           key: ${{ runner.os }}-precommit-py${{ matrix.python-version }}-${{ hashFiles('.pre-commit-config.yaml') }}
@@ -219,14 +219,14 @@ jobs:
       NPM_CONFIG_FUND: 'false'
       NPM_CONFIG_AUDIT: 'false'
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: ${{ env.NODE_LOCKFILES }}
       - name: Cache Playwright browsers
-        uses: actions/cache@v5.0.4 # 668228422ae6a00e4ad889ee87cd7109ec5666a7
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: ${{ runner.os }}-playwright-${{ hashFiles('alpha_factory_v1/demos/alpha_agi_insight_v1/insight_browser_v1/package-lock.json') }}
@@ -266,7 +266,7 @@ jobs:
       matrix:
         python-version: ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/main' && '["3.11"]' || '["3.11","3.12"]') }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Check for binary diffs (pre-build)
         run: python scripts/check_no_binary_diff.py
       - name: Ensure pip cache directory
@@ -292,7 +292,7 @@ jobs:
           PY
       - name: Verify $AGIALPHA configuration
         run: python scripts/check_agialpha_config.py
-      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -320,13 +320,13 @@ jobs:
           python scripts/check_python_deps.py
           python check_env.py --auto-install --demo macro_sentinel
       # Install Node.js and cache dependencies using both lockfiles
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: ${{ env.NODE_LOCKFILES }}
       - name: Cache Playwright browsers
-        uses: actions/cache@v5.0.4 # 668228422ae6a00e4ad889ee87cd7109ec5666a7
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: ${{ runner.os }}-playwright-${{ hashFiles('alpha_factory_v1/demos/alpha_agi_insight_v1/insight_browser_v1/package-lock.json') }}
@@ -433,7 +433,7 @@ jobs:
           if [[ -f tests/benchmarks/latest.json ]]; then echo "found=true" >> "$GITHUB_OUTPUT"; fi
       - name: Upload benchmark results
         if: steps.bench-check.outputs.found == 'true'
-        uses: actions/upload-artifact@v7.0.0 # bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: benchmark-results
           path: tests/benchmarks/latest.json
@@ -458,14 +458,14 @@ jobs:
           if [[ -f artifacts/coverage.xml ]]; then echo "found=true" >> "$GITHUB_OUTPUT"; fi
       - name: Upload pytest results
         if: always()
-        uses: actions/upload-artifact@v7.0.0 # bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: pytest-${{ matrix.python-version }}
           path: artifacts/test-reports/pytest.xml
           if-no-files-found: warn
       - name: Upload coverage
         if: steps.coverage-check.outputs.found == 'true'
-        uses: actions/upload-artifact@v7.0.0 # bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: coverage-xml
           path: artifacts/coverage.xml
@@ -481,7 +481,7 @@ jobs:
       NPM_CONFIG_FUND: 'false'
       NPM_CONFIG_AUDIT: 'false'
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Check for binary diffs (pre-build)
         run: python scripts/check_no_binary_diff.py
       - name: Ensure pip cache directory
@@ -505,7 +505,7 @@ jobs:
               exist_ok=True,
           )
           PY
-      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           # Use 3.11 to align with available CPU-only PyTorch wheels on Windows
           python-version: '3.11'
@@ -519,13 +519,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-demo-cpu.lock
           pip install -r requirements-dev.lock
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: ${{ env.NODE_LOCKFILES }}
       - name: Cache Playwright browsers
-        uses: actions/cache@v5.0.4 # 668228422ae6a00e4ad889ee87cd7109ec5666a7
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: ${{ runner.os }}-playwright-${{ hashFiles('alpha_factory_v1/demos/alpha_agi_insight_v1/insight_browser_v1/package-lock.json') }}
@@ -576,7 +576,7 @@ jobs:
       NPM_CONFIG_FUND: 'false'
       NPM_CONFIG_AUDIT: 'false'
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Check for binary diffs (pre-build)
         run: python scripts/check_no_binary_diff.py
       - name: Ensure pip cache directory
@@ -600,7 +600,7 @@ jobs:
               exist_ok=True,
           )
           PY
-      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           # Use 3.11 to align with available CPU-only PyTorch wheels on macOS
           python-version: '3.11'
@@ -616,7 +616,7 @@ jobs:
           pip install -r requirements-dev.lock
       - name: Install macOS extras
         run: pip install appnope==0.1.4
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -668,7 +668,7 @@ jobs:
       NPM_CONFIG_FUND: 'false'
       NPM_CONFIG_AUDIT: 'false'
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Check for binary diffs (pre-build)
         run: python scripts/check_no_binary_diff.py
       - name: Ensure pip cache directory
@@ -692,7 +692,7 @@ jobs:
               exist_ok=True,
           )
           PY
-      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           # Stay on 3.12 until upstream publishes stable PyTorch wheels for 3.13
           # to avoid CI flakiness during docs builds.
@@ -704,12 +704,12 @@ jobs:
       - name: Verify $AGIALPHA configuration
         run: python scripts/check_agialpha_config.py
       - name: Cache pre-commit
-        uses: actions/cache@v5.0.4 # 668228422ae6a00e4ad889ee87cd7109ec5666a7
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: .cache/pre-commit
           key: ${{ runner.os }}-precommit-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Cache Playwright browsers
-        uses: actions/cache@v5.0.4 # 668228422ae6a00e4ad889ee87cd7109ec5666a7
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: ${{ runner.os }}-playwright-${{ hashFiles('alpha_factory_v1/demos/alpha_agi_insight_v1/insight_browser_v1/package-lock.json') }}
@@ -722,7 +722,7 @@ jobs:
       - name: Install base dependencies
         run: python check_env.py --auto-install
       - uses: ./.github/actions/setup-insight-assets
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -773,7 +773,7 @@ jobs:
       NPM_CONFIG_FUND: 'false'
       NPM_CONFIG_AUDIT: 'false'
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Check for binary diffs (pre-build)
         run: python scripts/check_no_binary_diff.py
       - name: Ensure pip cache directory
@@ -797,7 +797,7 @@ jobs:
               exist_ok=True,
           )
           PY
-      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           # Keep parity with supported test matrix (3.11–3.12) so doc builds do not
           # pull unsupported wheels.
@@ -809,11 +809,11 @@ jobs:
       - name: Verify $AGIALPHA configuration
         run: python scripts/check_agialpha_config.py
       - name: Cache pre-commit
-        uses: actions/cache@v5.0.4 # 668228422ae6a00e4ad889ee87cd7109ec5666a7
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: .cache/pre-commit
           key: ${{ runner.os }}-precommit-${{ hashFiles('.pre-commit-config.yaml') }}
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -882,7 +882,7 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
       - name: Cache Playwright browsers
-        uses: actions/cache@v5.0.4 # 668228422ae6a00e4ad889ee87cd7109ec5666a7
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: ${{ runner.os }}-playwright-${{ hashFiles('alpha_factory_v1/demos/alpha_agi_insight_v1/insight_browser_v1/package-lock.json') }}
@@ -924,7 +924,7 @@ jobs:
       NPM_CONFIG_AUDIT: 'false'
     # This job builds and pushes the image.
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Free disk space
         run: bash scripts/ci_free_disk.sh
       - name: Ensure pip cache directory
@@ -948,7 +948,7 @@ jobs:
               exist_ok=True,
           )
           PY
-      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           # Align build Python with supported runtime versions to keep dependency
           # resolution stable while PyTorch finalizes 3.13 wheels.
@@ -959,7 +959,7 @@ jobs:
         run: python scripts/check_agialpha_config.py
       - name: Export repo_owner_lower
         run: echo "repo_owner_lower=${{ needs.owner-check.outputs.repo_owner_lower }}" >> "$GITHUB_ENV"
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -1029,7 +1029,7 @@ jobs:
         id: web-client-check
         run: |
           if [[ -f web-client.tar.gz ]]; then echo "found=true" >> "$GITHUB_OUTPUT"; fi
-      - uses: actions/upload-artifact@v7.0.0 # bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: steps.web-client-check.outputs.found == 'true'
         with:
           name: web-client
@@ -1113,7 +1113,7 @@ jobs:
         run: |
           docker run --rm -e RUN_MODE=cli "$DOCKER_IMAGE:ci" simulate --horizon 1 --offline
       - name: Login to GHCR
-        uses: docker/login-action@v4.1.0 # 4907a6ddec9925e35a0a9e82d7399ccc52663121
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -1143,7 +1143,7 @@ jobs:
       id-token: write
     environment: ci-on-demand
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Export repo_owner_lower
         run: echo "repo_owner_lower=${{ needs.owner-check.outputs.repo_owner_lower }}" >> "$GITHUB_ENV"
       - name: Show tool versions
@@ -1154,7 +1154,7 @@ jobs:
           docker compose version
           git --version
       - name: Login to GHCR
-        uses: docker/login-action@v4.1.0 # 4907a6ddec9925e35a0a9e82d7399ccc52663121
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -1185,7 +1185,7 @@ jobs:
         run: |
           cosign verify "ghcr.io/$repo_owner_lower/$DOCKER_IMAGE:${{ github.ref_name }}"
           cosign verify "ghcr.io/$repo_owner_lower/$DOCKER_IMAGE:latest"
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: web-client
       - name: Verify web client artifact
@@ -1201,6 +1201,8 @@ jobs:
       - name: Prepare release assets
         run: echo "Using prebuilt web client artifact"
       - name: Upload release assets
+        # NOTE: v2.6.1 is the latest published release. Upstream still runs on
+        # Node20, so keep this pin and track Node24 migration as follow-up debt.
         uses: softprops/action-gh-release@v2.6.1 # 153bb8e04406b158c6c84fc1615b65b24149a1fe
         with:
           files: web-client.tar.gz
@@ -1220,8 +1222,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.12'
       - name: Verify $AGIALPHA configuration
