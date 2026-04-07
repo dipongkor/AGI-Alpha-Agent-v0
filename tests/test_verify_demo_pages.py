@@ -3,7 +3,14 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from scripts.verify_demo_pages import DEMO_READINESS_SELECTORS, DOCS_DIR, _build_demo_url, _extract_failure_text, _is_ready
+from scripts.verify_demo_pages import (
+    DEMO_READINESS_SELECTORS,
+    DOCS_DIR,
+    _build_demo_url,
+    _extract_failure_text,
+    _insight_contract_ok,
+    _is_ready,
+)
 
 
 def test_extract_failure_text_with_none() -> None:
@@ -57,3 +64,10 @@ def test_is_ready_requires_insight_marker_or_mounted_root() -> None:
     assert _is_ready(demo, {"match": "main h1", "hasMain": True, "bodyTextLen": 200}) == (False, "")
     assert _is_ready(demo, {"match": "#root", "rootChildCount": 0}) == (False, "")
     assert _is_ready(demo, {"match": "#root", "rootChildCount": 1}) == (True, "insight-root-mounted")
+
+
+def test_insight_contract_requires_clean_runtime() -> None:
+    assert _insight_contract_ok([], [], []) == (True, "")
+    assert _insight_contract_ok([], ["missing.js"], []) == (False, "missing-local-assets")
+    assert _insight_contract_ok([], [], ["x -> 404"]) == (False, "http-error-responses")
+    assert _insight_contract_ok(["TypeError"], [], []) == (False, "page-errors")

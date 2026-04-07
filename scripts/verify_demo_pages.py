@@ -110,6 +110,21 @@ def _is_ready(demo: Path, state: dict[str, object]) -> tuple[bool, str]:
     return False, ""
 
 
+def _insight_contract_ok(
+    page_errors: list[str],
+    missing_assets: list[str],
+    response_failures: list[str],
+) -> tuple[bool, str]:
+    """Validate the stricter offline readiness contract for Insight."""
+    if missing_assets:
+        return False, "missing-local-assets"
+    if response_failures:
+        return False, "http-error-responses"
+    if page_errors:
+        return False, "page-errors"
+    return True, ""
+
+
 def _selector_status(page) -> str:
     try:
         status = page.evaluate(
@@ -283,6 +298,15 @@ def main() -> int:
                         while time.monotonic() < deadline:
                             state = _readiness_state(page)
                             ready, reason = _is_ready(demo, state)
+                            if ready and demo.name == "alpha_agi_insight_v1":
+                                contract_ok, contract_reason = _insight_contract_ok(
+                                    page_errors,
+                                    missing_assets,
+                                    response_failures,
+                                )
+                                if not contract_ok:
+                                    last_error = f"insight-contract:{contract_reason}"
+                                    ready = False
                             if ready:
                                 print(f"{demo.name}: ready ({reason})")
                                 break
