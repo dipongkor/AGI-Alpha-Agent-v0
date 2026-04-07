@@ -13,3 +13,11 @@ def test_even_non_negative_rejects_odd_positive() -> None:
 
 def test_even_non_negative_rejects_negative_even() -> None:
     assert not is_even_non_negative(-2)
+
+
+def test_even_non_negative_accepts_zero() -> None:
+    assert is_even_non_negative(0)
+
+
+def test_even_non_negative_rejects_negative_odd() -> None:
+    assert not is_even_non_negative(-1)
