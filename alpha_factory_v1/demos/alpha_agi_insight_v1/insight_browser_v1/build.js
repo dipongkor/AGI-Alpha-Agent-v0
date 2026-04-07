@@ -135,7 +135,7 @@ function renderD3BridgeModule(exportNames) {
     const lines = [
         "// SPDX-License-Identifier: Apache-2.0",
         "// Auto-generated D3 ESM bridge for insight.bundle.js imports.",
-        'import "./d3.v7.min.js";',
+        'import "./assets/d3.v7.min.js";',
         "const d3 = window.d3;",
         "if (!d3) {",
         "  throw new Error('d3 global not found');",

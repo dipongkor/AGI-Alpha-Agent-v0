@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from scripts.verify_demo_pages import DOCS_DIR, _build_demo_url, _extract_failure_text
+from scripts.verify_demo_pages import DEMO_READINESS_SELECTORS, DOCS_DIR, _build_demo_url, _extract_failure_text, _is_ready
 
 
 def test_extract_failure_text_with_none() -> None:
@@ -46,3 +46,14 @@ def test_build_demo_url_uses_http() -> None:
     assert url.startswith("http://127.0.0.1:9999/")
     assert url.endswith("/alpha_agi_insight_v1/index.html")
     assert not url.startswith("file://")
+
+
+def test_insight_page_uses_explicit_readiness_contract() -> None:
+    assert DEMO_READINESS_SELECTORS["alpha_agi_insight_v1"] == ("html[data-insight-ready='1']", "#root")
+
+
+def test_is_ready_requires_insight_marker_or_mounted_root() -> None:
+    demo = DOCS_DIR / "alpha_agi_insight_v1"
+    assert _is_ready(demo, {"match": "main h1", "hasMain": True, "bodyTextLen": 200}) == (False, "")
+    assert _is_ready(demo, {"match": "#root", "rootChildCount": 0}) == (False, "")
+    assert _is_ready(demo, {"match": "#root", "rootChildCount": 1}) == (True, "insight-root-mounted")
