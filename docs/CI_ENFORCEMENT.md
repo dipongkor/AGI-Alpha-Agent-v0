@@ -19,10 +19,10 @@ Use this checklist to keep CI truthful, minimal, and reviewer-friendly.
 
 3. **Heavy CI stays off PR gating**
    - Keep **🚀 Integration CI — Insight Demo** for post-merge/release confidence:
-     - `push` to `main`
+     - `push` to `main` (full non-release validation surface)
      - release tags (`v*`, `release-*`)
      - manual dispatch
-   - Keep push-to-main scope lean/stable; reserve docs-build + Docker/signing + full matrix replay for tag/manual release contexts.
+   - Keep release-only publish/deploy/signing scoped to tag/manual contexts while all validation jobs run on merge-to-main.
    - Do not add this full matrix back to required PR checks unless the PR gate is redesigned and docs/scripts are updated together.
 
 4. **CI health monitoring**

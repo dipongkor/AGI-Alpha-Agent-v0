@@ -102,17 +102,21 @@ jobs:
             --branch "${CI_EVAL_BRANCH}" \
             --ref "${CI_EVAL_BRANCH}"
 
-      - name: Observe integration CI freshness (informational)
+      - name: Check merge-surface integration CI health
         if: ${{ github.event_name != 'workflow_run' }}
         env:
           GITHUB_TOKEN: ${{ env.ADMIN_GITHUB_TOKEN != '' && env.ADMIN_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           python scripts/check_ci_status.py \
-            --once \
+            --wait-minutes 5 \
+            --pending-grace-minutes 45 \
+            --stale-minutes 90 \
+            --cancel-stale \
+            --dispatch-missing \
+            --poll-seconds 30 \
             --workflow ci.yml \
             --branch "${CI_POLICY_BRANCH}" \
-            --ref "${CI_POLICY_BRANCH}" \
-            --read-only || echo "::warning::Integration CI workflow is not green or missing recent runs."
+            --ref "${CI_POLICY_BRANCH}"
       - name: Warn when admin token is unavailable
         if: ${{ env.ADMIN_GITHUB_TOKEN == '' }}
         run: echo "::warning::ADMIN_GITHUB_TOKEN not configured; branch protection verification skipped."

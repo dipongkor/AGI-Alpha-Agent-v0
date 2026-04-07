@@ -22,9 +22,9 @@ The CI matrix is pinned to the canonical `$AGIALPHA` token contract (`0xa61a3b3a
 
 The **canonical pull-request gate** is **✅ PR CI**. It runs Ruff plus the focused smoke test suite on pull requests, pushes to `main`, and merge queue runs.
 
-The full **🚀 Integration CI — Insight Demo** workflow is intentionally **off the PR path**. It runs on pushes to `main`, release tags (`v*` / `release-*`), and manual dispatch for maintainers. Push-to-main runs a lean stable subset, while tags/manual dispatch run the heavy release matrix (multi-version lint/type-check/test, docs build validation, Docker build/signing, deployment checks).
+The full **🚀 Integration CI — Insight Demo** workflow is intentionally **off the PR path**. It runs on pushes to `main`, release tags (`v*` / `release-*`), and manual dispatch for maintainers. Push-to-main runs the full non-release validation matrix (actionlint, Ruff+Mypy matrix, pytest matrix, Insight Browser ESLint, Windows/macOS smoke, MkDocs, Docs Build, Docker build validation, and branch-protection guardrails). Tags/manual dispatch add release-only publish/deploy/signing stages.
 
-**🩺 CI Health** hard-monitors the canonical required surface (✅ PR CI) and context-switches to 🚀 Integration CI checks only when triggered by that workflow. Scheduled/manual runs keep heavy CI freshness as informational-only and still allow missing-run dispatch, while `workflow_run` watchdog executions are rerun-only (no extra dispatch) because the upstream run already exists. Self-monitoring remains opt-in (`--include-self`), and rerun support helps Repo-Healer progress beyond run-attempt-1 report-only triage. `ADMIN_GITHUB_TOKEN` enables branch-protection remediation while default tokens stay read-only for admin APIs.
+**🩺 CI Health** hard-monitors the canonical required surface (✅ PR CI) and hard-monitors 🚀 Integration CI for merge-surface contexts. `workflow_run` watchdog executions remain rerun-only (no extra dispatch) because the upstream run already exists; scheduled/manual runs enforce both PR and merge surfaces with missing-run dispatch enabled. Self-monitoring remains opt-in (`--include-self`), and rerun support helps Repo-Healer progress beyond run-attempt-1 report-only triage. `ADMIN_GITHUB_TOKEN` enables branch-protection remediation while default tokens stay read-only for admin APIs.
 
 #### Run CI locally
 
@@ -209,8 +209,8 @@ The [🚀 Integration CI](.github/workflows/ci.yml) workflow verifies the Insigh
 linting, type checks, unit tests and a Docker build. Open **Actions → 🚀 Integration CI — Insight Demo**, select the branch or tag to test in the drop‑down and click
 **Run workflow** to dispatch the pipeline. This workflow also runs
 automatically on pushes to `main` and release tags (`v*`, `release-*`), while
-staying off pull requests. Push-to-main runs keep the stable integration subset,
-while release tags/manual dispatch run the full release matrix. Each job begins
+staying off pull requests. Push-to-main runs now execute the full non-release
+validation matrix, while release tags/manual dispatch append publish/deploy tasks. Each job begins
 by verifying the actor matches the repository owner only for manual dispatches;
 push and tag runs execute automatically for normal integration validation.
 Because the first job checks `${{ github.actor }}` against `${{ github.repository_owner }}`,
