@@ -63,3 +63,9 @@ After editing workflow files, run:
 python tools/update_actions.py
 pre-commit run --files .github/workflows/ci.yml .github/workflows/pr-ci.yml .github/workflows/ci-health.yml
 ```
+
+## GitHub Actions runtime hygiene (Node 20 deprecation)
+
+Workflow actions are pinned to Node24-compatible releases where currently available. A small number of third-party
+actions still publish Node20 runtimes upstream (for example `softprops/action-gh-release@v2.6.1`), so those remain
+pinned with explicit version comments until maintainers publish Node24 builds.
