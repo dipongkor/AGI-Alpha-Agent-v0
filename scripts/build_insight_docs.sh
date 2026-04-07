@@ -122,6 +122,12 @@ fi
 if [[ ! -f "$DOCS_DIR/d3.v7.min.js" && -f "$DOCS_DIR/assets/d3.v7.min.js" ]]; then
     cp -a "$DOCS_DIR/assets/d3.v7.min.js" "$DOCS_DIR/d3.v7.min.js"
 fi
+if [[ ! -f "$DOCS_DIR/d3.v7.min.js" && -f "$BROWSER_DIR/dist/assets/d3.v7.min.js" ]]; then
+    cp -a "$BROWSER_DIR/dist/assets/d3.v7.min.js" "$DOCS_DIR/d3.v7.min.js"
+fi
+if [[ ! -f "$DOCS_DIR/d3.v7.min.js" && -f "$BROWSER_DIR/node_modules/d3/dist/d3.min.js" ]]; then
+    cp -a "$BROWSER_DIR/node_modules/d3/dist/d3.min.js" "$DOCS_DIR/d3.v7.min.js"
+fi
 
 # Keep the runtime locale catalog available at the path referenced by the
 # offline bundle.

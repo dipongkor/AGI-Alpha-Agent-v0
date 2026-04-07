@@ -5,11 +5,13 @@ from types import SimpleNamespace
 
 from scripts.verify_demo_pages import (
     DEMO_READINESS_SELECTORS,
+    DEMO_REQUIRED_LOCAL_ASSETS,
     DOCS_DIR,
     _build_demo_url,
     _extract_failure_text,
     _insight_contract_ok,
     _is_ready,
+    _missing_required_assets,
 )
 
 
@@ -57,6 +59,12 @@ def test_build_demo_url_uses_http() -> None:
 
 def test_insight_page_uses_explicit_readiness_contract() -> None:
     assert DEMO_READINESS_SELECTORS["alpha_agi_insight_v1"] == ("html[data-insight-ready='1']", "#root")
+    assert DEMO_REQUIRED_LOCAL_ASSETS["alpha_agi_insight_v1"] == (
+        "insight.bundle.js",
+        "style.css",
+        "d3.v7.min.js",
+        "src/i18n/en.json",
+    )
 
 
 def test_is_ready_requires_insight_marker_or_mounted_root() -> None:
@@ -67,7 +75,21 @@ def test_is_ready_requires_insight_marker_or_mounted_root() -> None:
 
 
 def test_insight_contract_requires_clean_runtime() -> None:
-    assert _insight_contract_ok([], [], []) == (True, "")
-    assert _insight_contract_ok([], ["missing.js"], []) == (False, "missing-local-assets")
-    assert _insight_contract_ok([], [], ["x -> 404"]) == (False, "http-error-responses")
-    assert _insight_contract_ok(["TypeError"], [], []) == (False, "page-errors")
+    assert _insight_contract_ok([], [], [], []) == (True, "")
+    assert _insight_contract_ok([], [], [], ["src/i18n/en.json"]) == (False, "missing-required-assets")
+    assert _insight_contract_ok([], ["missing.js"], [], []) == (False, "missing-local-assets")
+    assert _insight_contract_ok([], [], ["x -> 404"], []) == (False, "http-error-responses")
+    assert _insight_contract_ok(["TypeError"], [], [], []) == (False, "page-errors")
+
+
+def test_missing_required_assets_detects_insight_contract_files(tmp_path) -> None:
+    demo_dir = tmp_path / "alpha_agi_insight_v1"
+    (demo_dir / "src" / "i18n").mkdir(parents=True)
+    (demo_dir / "insight.bundle.js").write_text("", encoding="utf-8")
+    (demo_dir / "style.css").write_text("", encoding="utf-8")
+    (demo_dir / "d3.v7.min.js").write_text("", encoding="utf-8")
+    (demo_dir / "src" / "i18n" / "en.json").write_text("{}", encoding="utf-8")
+    assert _missing_required_assets(demo_dir) == []
+
+    (demo_dir / "src" / "i18n" / "en.json").unlink(missing_ok=True)
+    assert _missing_required_assets(demo_dir) == ["src/i18n/en.json"]

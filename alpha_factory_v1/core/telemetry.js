@@ -15,10 +15,12 @@ export async function hashSession(id) {
 }
 
 export function initTelemetry(t) {
+  const importMetaEnvEndpoint =
+    typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_OTEL_ENDPOINT : undefined;
   const endpoint =
     (typeof process !== 'undefined' && process.env.OTEL_ENDPOINT) ||
     (typeof window !== 'undefined' && window.OTEL_ENDPOINT) ||
-    (typeof import.meta !== 'undefined' && import.meta.env.VITE_OTEL_ENDPOINT);
+    importMetaEnvEndpoint;
 
   if (!endpoint) {
     return { recordRun() {}, recordShare() {} };
