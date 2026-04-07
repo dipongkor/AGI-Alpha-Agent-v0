@@ -37,3 +37,12 @@ def test_ci_health_uses_apply_on_verify_branch_protection_call() -> None:
     assert '--branch "${CI_POLICY_BRANCH}"' in call_window
     assert "--apply" in call_window
     assert "--required-checks-file scripts/required_checks.json" in call_window
+
+
+def test_ci_health_scheduled_runs_hard_monitor_integration_ci() -> None:
+    workflow = Path(".github/workflows/ci-health.yml").read_text(encoding="utf-8")
+
+    assert "- name: Check merge-surface integration CI health" in workflow
+    assert "--workflow ci.yml" in workflow
+    assert "--dispatch-missing" in workflow
+    assert "informational" not in workflow
