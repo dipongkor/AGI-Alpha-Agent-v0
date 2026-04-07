@@ -22,6 +22,9 @@ READY_SELECTORS = (
     "#root",
     "[data-testid='app']",
 )
+DEMO_READINESS_SELECTORS: dict[str, tuple[str, ...]] = {
+    "alpha_agi_insight_v1": ("html[data-insight-ready='1']", "#root"),
+}
 DEFAULT_TIMEOUT_MS = int(os.environ.get("PWA_TIMEOUT_MS", "60000"))
 MAX_ATTEMPTS = int(os.environ.get("PWA_DEMO_ATTEMPTS", "3"))
 
@@ -66,6 +69,17 @@ def _readiness_state(page) -> dict[str, object]:
 
 
 def _is_ready(demo: Path, state: dict[str, object]) -> tuple[bool, str]:
+    required_selectors = DEMO_READINESS_SELECTORS.get(demo.name)
+    if required_selectors:
+        match = state.get("match")
+        if match == "html[data-insight-ready='1']" and state.get("insightReady"):
+            return True, "insight-ready-marker"
+        if match == "#root":
+            root_child_count = int(state.get("rootChildCount") or 0)
+            if root_child_count > 0:
+                return True, "insight-root-mounted"
+        return False, ""
+
     match = state.get("match")
     if match in {"main h1", "article h1"}:
         return True, f"selector:{match}"

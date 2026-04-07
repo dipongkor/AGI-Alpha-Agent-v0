@@ -123,6 +123,13 @@ if [[ ! -f "$DOCS_DIR/d3.v7.min.js" && -f "$DOCS_DIR/assets/d3.v7.min.js" ]]; th
     cp -a "$DOCS_DIR/assets/d3.v7.min.js" "$DOCS_DIR/d3.v7.min.js"
 fi
 
+# Keep the runtime locale catalog available at the path referenced by the
+# offline bundle.
+if [[ -f "$BROWSER_DIR/src/i18n/en.json" ]]; then
+    mkdir -p "$DOCS_DIR/src/i18n"
+    cp -a "$BROWSER_DIR/src/i18n/en.json" "$DOCS_DIR/src/i18n/en.json"
+fi
+
 LICENSE_FILE="plotly.min.js.LICENSE.txt"
 if [[ ! -f "$DOCS_DIR/$LICENSE_FILE" && -f "$REPO_ROOT/docs/alpha_agi_insight_v1/$LICENSE_FILE" ]]; then
     cp -a "$REPO_ROOT/docs/alpha_agi_insight_v1/$LICENSE_FILE" "$DOCS_DIR/"
