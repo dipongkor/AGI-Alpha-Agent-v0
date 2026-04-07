@@ -10,6 +10,7 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
+from typing import Any
 
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import sync_playwright
@@ -24,6 +25,9 @@ READY_SELECTORS = (
 )
 DEMO_READINESS_SELECTORS: dict[str, tuple[str, ...]] = {
     "alpha_agi_insight_v1": ("html[data-insight-ready='1']", "#root"),
+}
+DEMO_REQUIRED_LOCAL_ASSETS: dict[str, tuple[str, ...]] = {
+    "alpha_agi_insight_v1": ("insight.bundle.js", "style.css", "d3.v7.min.js", "src/i18n/en.json"),
 }
 DEFAULT_TIMEOUT_MS = int(os.environ.get("PWA_TIMEOUT_MS", "60000"))
 MAX_ATTEMPTS = int(os.environ.get("PWA_DEMO_ATTEMPTS", "3"))
@@ -68,6 +72,19 @@ def _readiness_state(page) -> dict[str, object]:
     )
 
 
+def _as_int(value: object) -> int:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, (int, float)):
+        return int(value)
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            return 0
+    return 0
+
+
 def _is_ready(demo: Path, state: dict[str, object]) -> tuple[bool, str]:
     required_selectors = DEMO_READINESS_SELECTORS.get(demo.name)
     if required_selectors:
@@ -75,7 +92,7 @@ def _is_ready(demo: Path, state: dict[str, object]) -> tuple[bool, str]:
         if match == "html[data-insight-ready='1']" and state.get("insightReady"):
             return True, "insight-ready-marker"
         if match == "#root":
-            root_child_count = int(state.get("rootChildCount") or 0)
+            root_child_count = _as_int(state.get("rootChildCount") or 0)
             if root_child_count > 0:
                 return True, "insight-root-mounted"
         return False, ""
@@ -86,13 +103,13 @@ def _is_ready(demo: Path, state: dict[str, object]) -> tuple[bool, str]:
     if match == "html[data-insight-ready='1']":
         return True, "insight-ready"
     if match in {"#root", "[data-testid='app']"}:
-        root_child_count = int(state.get("rootChildCount") or 0)
+        root_child_count = _as_int(state.get("rootChildCount") or 0)
         if root_child_count > 0:
             return True, "root+children"
     has_main = bool(state.get("hasMain"))
     has_root = bool(state.get("hasRoot"))
-    body_text_len = int(state.get("bodyTextLen") or 0)
-    main_text_len = int(state.get("mainTextLen") or 0)
+    body_text_len = _as_int(state.get("bodyTextLen") or 0)
+    main_text_len = _as_int(state.get("mainTextLen") or 0)
     if has_main and body_text_len > 40:
         return True, "main+body-text"
     if has_root and body_text_len > 40:
@@ -114,8 +131,11 @@ def _insight_contract_ok(
     page_errors: list[str],
     missing_assets: list[str],
     response_failures: list[str],
+    missing_required_assets: list[str],
 ) -> tuple[bool, str]:
     """Validate the stricter offline readiness contract for Insight."""
+    if missing_required_assets:
+        return False, "missing-required-assets"
     if missing_assets:
         return False, "missing-local-assets"
     if response_failures:
@@ -125,7 +145,7 @@ def _insight_contract_ok(
     return True, ""
 
 
-def _selector_status(page) -> str:
+def _selector_status(page: Any) -> str:
     try:
         status = page.evaluate(
             """
@@ -140,7 +160,7 @@ def _selector_status(page) -> str:
     return ", ".join(f"{item['selector']}={item['count']}" for item in status)
 
 
-def _main_snippet(page) -> str:
+def _main_snippet(page: Any) -> str:
     try:
         snippet = page.eval_on_selector("main", "el => el.outerHTML")
     except PlaywrightError:
@@ -162,6 +182,8 @@ def _extract_failure_text(failure: object | None) -> str:
             return "unknown"
     if isinstance(failure, str):
         return failure
+    if isinstance(failure, bytes):
+        return failure.decode("utf-8", errors="replace")
     if isinstance(failure, dict):
         return str(failure.get("errorText") or failure.get("error_text") or "unknown")
     error_text = getattr(failure, "error_text", None) or getattr(failure, "errorText", None)
@@ -184,9 +206,17 @@ def _build_demo_url(base_url: str, demo: Path) -> str:
     return f"{base_url.rstrip('/')}/{rel_path}/index.html"
 
 
+def _missing_required_assets(demo: Path) -> list[str]:
+    missing: list[str] = []
+    for rel_path in DEMO_REQUIRED_LOCAL_ASSETS.get(demo.name, ()):
+        if not (demo / rel_path).exists():
+            missing.append(rel_path)
+    return missing
+
+
 def _log_diagnostics(
     demo: Path,
-    page,
+    page: Any,
     url: str,
     response_status: int | None,
     console_messages: list[str],
@@ -194,6 +224,7 @@ def _log_diagnostics(
     request_failures: list[str],
     response_failures: list[str],
     missing_assets: list[str],
+    missing_required_assets: list[str],
 ) -> None:
     selector_status = _selector_status(page)
     print(
@@ -226,6 +257,10 @@ def _log_diagnostics(
         print("Missing local assets:", file=sys.stderr)
         for failure in missing_assets:
             print(f"  {failure}", file=sys.stderr)
+    if missing_required_assets:
+        print("Missing required demo assets:", file=sys.stderr)
+        for rel_path in missing_required_assets:
+            print(f"  {rel_path}", file=sys.stderr)
 
 
 def main() -> int:
@@ -248,6 +283,7 @@ def main() -> int:
                 last_request_failures: list[str] = []
                 last_response_failures: list[str] = []
                 last_missing_assets: list[str] = []
+                last_missing_required_assets: list[str] = []
                 ready = False
                 page_for_diagnostics = None
 
@@ -258,22 +294,23 @@ def main() -> int:
                     request_failures: list[str] = []
                     response_failures: list[str] = []
                     missing_assets: list[str] = []
+                    missing_required_assets = _missing_required_assets(demo)
 
-                    def _record_console(msg) -> None:
+                    def _record_console(msg: Any) -> None:
                         if msg.type in {"error", "warning"}:
                             console_messages.append(f"[{msg.type}] {msg.text}")
 
                     def _record_page_error(exc: Exception) -> None:
                         page_errors.append(str(exc))
 
-                    def _record_request_failure(req) -> None:
+                    def _record_request_failure(req: Any) -> None:
                         try:
                             failure = _extract_failure_text(req.failure)
                             request_failures.append(f"{req.url} -> {failure}")
                         except Exception as exc:  # noqa: BLE001
                             request_failures.append(f"{req.url} -> handler error: {exc}")
 
-                    def _record_response(response) -> None:
+                    def _record_response(response: Any) -> None:
                         if response.status >= 400:
                             response_failures.append(f"{response.url} -> {response.status}")
                         if response.url.startswith(base_url):
@@ -303,6 +340,7 @@ def main() -> int:
                                     page_errors,
                                     missing_assets,
                                     response_failures,
+                                    missing_required_assets,
                                 )
                                 if not contract_ok:
                                     last_error = f"insight-contract:{contract_reason}"
@@ -322,6 +360,7 @@ def main() -> int:
                         last_request_failures = request_failures
                         last_response_failures = response_failures
                         last_missing_assets = missing_assets
+                        last_missing_required_assets = missing_required_assets
                         if attempt == MAX_ATTEMPTS and not ready:
                             page_for_diagnostics = page
                         else:
@@ -344,6 +383,7 @@ def main() -> int:
                         last_request_failures,
                         last_response_failures,
                         last_missing_assets,
+                        last_missing_required_assets,
                     )
                     if page_for_diagnostics:
                         page_for_diagnostics.close()

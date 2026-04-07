@@ -11,3 +11,11 @@ def test_build_script_uses_src_scoped_removal_patterns() -> None:
     assert "/<script[^>]*\\bsrc=([\"'])[^\"']*pyodide\\.js" in build_script
     assert "<script[\\s\\S]*?bundle\\.esm\\.min\\.js[\\s\\S]*?</script>" not in build_script
     assert "<script[\\s\\S]*?pyodide\\.js[\\s\\S]*?</script>" not in build_script
+
+
+def test_docs_build_script_has_d3_fallback_paths() -> None:
+    build_script = Path("scripts/build_insight_docs.sh").read_text(encoding="utf-8")
+
+    assert "$DOCS_DIR/assets/d3.v7.min.js" in build_script
+    assert "$BROWSER_DIR/dist/assets/d3.v7.min.js" in build_script
+    assert "$BROWSER_DIR/node_modules/d3/dist/d3.min.js" in build_script
