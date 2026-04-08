@@ -21,7 +21,7 @@ export async function initI18n(): Promise<void> {
   currentLanguage =
     lang.startsWith('fr') ? 'fr' : lang.startsWith('es') ? 'es' : lang.startsWith('zh') ? 'zh' : 'en';
   try {
-    const res = await fetch(`src/i18n/${currentLanguage}.json`);
+    const res = await fetch(`assets/src/i18n/${currentLanguage}.json`);
     strings = { ...enStrings, ...(await res.json()) };
   } catch {
     strings = enStrings;
@@ -33,7 +33,7 @@ export async function setLanguage(lang: string): Promise<void> {
   currentLanguage = lang;
   localStorage.setItem('lang', lang);
   try {
-    const res = await fetch(`src/i18n/${lang}.json`);
+    const res = await fetch(`assets/src/i18n/${lang}.json`);
     strings = { ...enStrings, ...(await res.json()) };
   } catch {
     strings = enStrings;

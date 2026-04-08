@@ -27,7 +27,7 @@ DEMO_READINESS_SELECTORS: dict[str, tuple[str, ...]] = {
     "alpha_agi_insight_v1": ("html[data-insight-ready='1']", "#root"),
 }
 DEMO_REQUIRED_LOCAL_ASSETS: dict[str, tuple[str, ...]] = {
-    "alpha_agi_insight_v1": ("insight.bundle.js", "style.css", "d3.v7.min.js", "src/i18n/en.json"),
+    "alpha_agi_insight_v1": ("insight.bundle.js", "style.css", "assets/d3.v7.min.js", "assets/src/i18n/en.json"),
 }
 DEFAULT_TIMEOUT_MS = int(os.environ.get("PWA_TIMEOUT_MS", "60000"))
 MAX_ATTEMPTS = int(os.environ.get("PWA_DEMO_ATTEMPTS", "3"))

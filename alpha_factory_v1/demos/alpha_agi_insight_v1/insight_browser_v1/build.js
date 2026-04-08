@@ -307,8 +307,6 @@ async function bundle() {
         ? new URL(process.env.OTEL_ENDPOINT).origin
         : "";
     await fs.mkdir(OUT_DIR, { recursive: true });
-    const scriptTag =
-        '<script type="module" src="insight.bundle.js" crossorigin="anonymous"></script>';
     await build({
         entryPoints: ["app.js"],
         bundle: true,
@@ -399,13 +397,15 @@ async function bundle() {
     bundleText = bundleText
         .replace(/\.\/wasm\//g, "./assets/wasm/")
         .replace(/\.\/wasm_llm\//g, "./assets/wasm_llm/")
+        .replace(/\.\/data\//g, "./assets/data/")
         .replace(/\.\.\/lib\/bundle\.esm\.min\.js/g, "./assets/lib/bundle.esm.min.js");
     await fs.writeFile(bundlePath, bundleText);
     const data = await fs.readFile(bundlePath);
     const appSri =
         "sha384-" + createHash("sha384").update(data).digest("base64");
     const sriTag = `<script type="module" src="insight.bundle.js" integrity="${appSri}" crossorigin="anonymous"></script>`;
-    outHtml = outHtml.replace(scriptTag, sriTag)
+    outHtml = outHtml
+        .replace(/<script[^>]*type=["']module["'][^>]*\bsrc=["']insight\.bundle\.js["'][^>]*><\/script>/i, sriTag)
         .replace(
             /<script[^>]*\bsrc=(["'])[^"']*bundle\.esm\.min\.js(?:\?[^"']*)?\1[^>]*>\s*<\/script>\s*/gi,
             "",
@@ -418,7 +418,10 @@ async function bundle() {
         .replace('href="manifest.json"', 'href="assets/manifest.json"')
         .replace('href="favicon.svg"', 'href="assets/favicon.svg"');
     await fs.writeFile(`${OUT_DIR}/index.html`, outHtml);
-    const devHtml = html.replace(scriptTag, sriTag);
+    const devHtml = html.replace(
+        /<script[^>]*type=["']module["'][^>]*\bsrc=["']insight\.bundle\.js["'][^>]*><\/script>/i,
+        sriTag,
+    );
     if (devHtml !== html) {
         await fs.writeFile("index.html", devHtml);
     }
