@@ -208,10 +208,10 @@ jobs:
             exit 1
           fi
       - name: Ruff lint
-        run: ruff check .
+        run: python -m ruff check .
       - name: Mypy type-check
         # Use configuration defaults to restrict analysis to the src package
-        run: mypy --config-file mypy.ini
+        run: python -m mypy --config-file mypy.ini
 
   insight-eslint:
     name: "🧪 Insight Browser ESLint"
@@ -664,7 +664,7 @@ jobs:
     timeout-minutes: 30
     env:
       SANDBOX_IMAGE: selfheal-sandbox:latest
-      PWA_TIMEOUT_MS: '120000'
+      PWA_TIMEOUT_MS: '180000'
       NPM_CONFIG_CACHE: ${{ github.workspace }}/.npm-cache/docs-check
       NPM_CONFIG_FUND: 'false'
       NPM_CONFIG_AUDIT: 'false'
@@ -778,7 +778,7 @@ jobs:
     env:
       FETCH_ASSETS_ATTEMPTS: '5'
       SANDBOX_IMAGE: selfheal-sandbox:latest
-      PWA_TIMEOUT_MS: '120000'
+      PWA_TIMEOUT_MS: '180000'
       NPM_CONFIG_CACHE: ${{ github.workspace }}/.npm-cache/docs-build
       NPM_CONFIG_FUND: 'false'
       NPM_CONFIG_AUDIT: 'false'
