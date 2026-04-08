@@ -109,6 +109,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Lint workflows
         uses: reviewdog/action-actionlint@437bbe918b0d29544cbf9e8b1d63fe6f4e7a881d # v1
         with:
@@ -128,6 +130,8 @@ jobs:
     steps:
       # checkout required for local composite actions
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Check for binary diffs
         run: python scripts/check_no_binary_diff.py
       - name: Ensure pip cache directory
@@ -203,7 +207,7 @@ jobs:
             exit 1
           fi
       - name: Ruff lint
-        run: ruff check alpha_factory_v1/demos/alpha_agi_insight_v1
+        run: ruff check .
       - name: Mypy type-check
         # Use configuration defaults to restrict analysis to the src package
         run: mypy --config-file mypy.ini
@@ -220,6 +224,8 @@ jobs:
       NPM_CONFIG_AUDIT: 'false'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version-file: '.nvmrc'
@@ -267,6 +273,8 @@ jobs:
         python-version: ${{ fromJSON('["3.11","3.12"]') }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Check for binary diffs (pre-build)
         run: python scripts/check_no_binary_diff.py
       - name: Ensure pip cache directory
@@ -470,6 +478,8 @@ jobs:
       NPM_CONFIG_AUDIT: 'false'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Check for binary diffs (pre-build)
         run: python scripts/check_no_binary_diff.py
       - name: Ensure pip cache directory
@@ -565,6 +575,8 @@ jobs:
       NPM_CONFIG_AUDIT: 'false'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Check for binary diffs (pre-build)
         run: python scripts/check_no_binary_diff.py
       - name: Ensure pip cache directory
@@ -657,6 +669,8 @@ jobs:
       NPM_CONFIG_AUDIT: 'false'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Check for binary diffs (pre-build)
         run: python scripts/check_no_binary_diff.py
       - name: Ensure pip cache directory
@@ -762,6 +776,8 @@ jobs:
       NPM_CONFIG_AUDIT: 'false'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Check for binary diffs (pre-build)
         run: python scripts/check_no_binary_diff.py
       - name: Ensure pip cache directory
@@ -913,6 +929,8 @@ jobs:
     # This job builds and pushes the image.
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Free disk space
         run: bash scripts/ci_free_disk.sh
       - name: Ensure pip cache directory
@@ -1137,6 +1155,8 @@ jobs:
     environment: ci-on-demand
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Export repo_owner_lower
         run: echo "repo_owner_lower=${{ needs.owner-check.outputs.repo_owner_lower }}" >> "$GITHUB_ENV"
       - name: Show tool versions
@@ -1217,6 +1237,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.12'

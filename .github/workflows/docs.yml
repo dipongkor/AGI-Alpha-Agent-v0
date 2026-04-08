@@ -29,8 +29,12 @@ jobs:
       # HF_GPT2_BASE_URL overrides the default Hugging Face mirror.
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/ensure-owner
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Check for binary diffs (pre-build)
         run: python scripts/check_no_binary_diff.py
       - name: Set up Python
