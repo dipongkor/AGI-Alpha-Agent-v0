@@ -75,6 +75,7 @@ See also `repo_healer_v1/SCRATCHPAD.md` for a concise persisted snapshot used du
 
 Workflow: `.github/workflows/repo-healer.yml`
 
+- Runtime dependencies are installed from `repo_healer_v1/requirements-ci.txt` to keep bundle/report execution deterministic and explicit.
 - Trigger: failed `workflow_run` from real CI workflows + manual dispatch.
 - Emits structured artifacts:
   - `repo_healer_bundle.json`
