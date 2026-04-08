@@ -55,17 +55,7 @@ jobs:
       - name: Detect docs build script
         id: build-script
         run: |
-          scripts=("build:docs-insight" "build:insight" "build")
-          for script in "${scripts[@]}"; do
-            value=$(npm pkg get "scripts.${script}" | tr -d '"')
-            if [ "${value}" != "null" ]; then
-              echo "script=${script}" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-          done
-          echo "No build script found in package.json" >&2
-          exit 1
-        working-directory: ${{ env.INSIGHT_BROWSER_DIR }}
+          python "$GITHUB_WORKSPACE/scripts/select_insight_build_script.py"             --package-json "$GITHUB_WORKSPACE/${{ env.INSIGHT_BROWSER_DIR }}/package.json"             --github-output "$GITHUB_OUTPUT"
 
       - name: Build Insight bundle
         run: npm run ${{ steps.build-script.outputs.script }}
