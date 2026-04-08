@@ -303,7 +303,7 @@ class _Planner:
         self.depth = depth
         if torch is not None:
             self.net = nn.Sequential(nn.Linear(10, 64), nn.ReLU(), nn.Linear(64, 1))  # type: ignore[attr-defined]
-        elif "lgb" in globals():
+        elif "lgb" in globals() and lgb is not None:
             self.net = lgb.LGBMRegressor(n_estimators=32)
         else:
             self.net = None  # heuristic fallback
