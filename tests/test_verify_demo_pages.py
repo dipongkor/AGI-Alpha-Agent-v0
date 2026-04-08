@@ -62,8 +62,8 @@ def test_insight_page_uses_explicit_readiness_contract() -> None:
     assert DEMO_REQUIRED_LOCAL_ASSETS["alpha_agi_insight_v1"] == (
         "insight.bundle.js",
         "style.css",
-        "d3.v7.min.js",
-        "src/i18n/en.json",
+        "assets/d3.v7.min.js",
+        "assets/src/i18n/en.json",
     )
 
 
@@ -87,9 +87,11 @@ def test_missing_required_assets_detects_insight_contract_files(tmp_path) -> Non
     (demo_dir / "src" / "i18n").mkdir(parents=True)
     (demo_dir / "insight.bundle.js").write_text("", encoding="utf-8")
     (demo_dir / "style.css").write_text("", encoding="utf-8")
-    (demo_dir / "d3.v7.min.js").write_text("", encoding="utf-8")
-    (demo_dir / "src" / "i18n" / "en.json").write_text("{}", encoding="utf-8")
+    (demo_dir / "assets").mkdir(parents=True, exist_ok=True)
+    (demo_dir / "assets" / "d3.v7.min.js").write_text("", encoding="utf-8")
+    (demo_dir / "assets" / "src" / "i18n").mkdir(parents=True, exist_ok=True)
+    (demo_dir / "assets" / "src" / "i18n" / "en.json").write_text("{}", encoding="utf-8")
     assert _missing_required_assets(demo_dir) == []
 
-    (demo_dir / "src" / "i18n" / "en.json").unlink(missing_ok=True)
-    assert _missing_required_assets(demo_dir) == ["src/i18n/en.json"]
+    (demo_dir / "assets" / "src" / "i18n" / "en.json").unlink(missing_ok=True)
+    assert _missing_required_assets(demo_dir) == ["assets/src/i18n/en.json"]
