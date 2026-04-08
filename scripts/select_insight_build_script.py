@@ -28,9 +28,7 @@ def select_build_script(package_json: Path, candidates: tuple[str, ...] = DEFAUL
         command = scripts.get(candidate)
         if command and command.strip():
             return candidate
-    raise RuntimeError(
-        f"No supported build script found in {package_json}: tried {', '.join(candidates)}"
-    )
+    raise RuntimeError(f"No supported build script found in {package_json}: tried {', '.join(candidates)}")
 
 
 def main(argv: list[str] | None = None) -> int:
