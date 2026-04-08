@@ -180,10 +180,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-precommit-py${{ matrix.python-version }}-
       - name: Install lint tools
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.lock
-          pip install -r requirements-dev.lock
+        run: ./scripts/ci_install_python_baseline.sh
       - name: Install pre-commit
         run: pip install pre-commit==4.2.0
         env:
@@ -312,11 +309,7 @@ jobs:
       - name: Free disk space
         run: bash scripts/ci_free_disk.sh
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.lock
-          pip install -r requirements-dev.lock
-          pip install -r alpha_factory_v1/backend/requirements-lock.txt
+        run: ./scripts/ci_install_python_baseline.sh --include-backend-lock
       - name: Ensure npm cache path lifecycle contract
         shell: bash
         run: |
@@ -722,13 +715,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-
       - name: Install Python baseline dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.lock
-          pip install -r requirements-dev.lock
-      - name: Install docs requirements
-        run: |
-          pip install -r requirements-docs.lock
+        run: ./scripts/ci_install_python_baseline.sh --include-docs-lock
       - name: Verify environment dependencies
         run: python check_env.py --auto-install
       - uses: ./.github/actions/setup-insight-assets
@@ -843,13 +830,7 @@ jobs:
         env:
           SANDBOX_IMAGE: ${{ env.SANDBOX_IMAGE || 'selfheal-sandbox:latest' }}
       - name: Install Python baseline dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.lock
-          pip install -r requirements-dev.lock
-      - name: Install docs requirements
-        run: |
-          pip install -r requirements-docs.lock
+        run: ./scripts/ci_install_python_baseline.sh --include-docs-lock
       - name: Verify environment dependencies
         run: python check_env.py --auto-install
       - name: Install insight browser dependencies
