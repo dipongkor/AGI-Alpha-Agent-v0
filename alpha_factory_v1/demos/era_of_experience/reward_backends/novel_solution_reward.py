@@ -47,7 +47,7 @@ import os as _os
 import threading as _th
 import hashlib as _hl
 import math as _math
-from typing import Any, List, Dict
+from typing import Any, List, Dict, cast
 
 _lock = _th.Lock()
 
@@ -101,6 +101,18 @@ def _cos(a: List[float], b: List[float]) -> float:
     return max(0.0, min(1.0, dot / (na * nb)))
 
 
+def _encode_embedding(text: str) -> List[float]:
+    """Return a normalized embedding vector as a flat list of floats."""
+    raw = _model.encode(text, normalize_embeddings=True)
+    if hasattr(raw, "tolist"):
+        raw = raw.tolist()
+    if isinstance(raw, list):
+        if raw and isinstance(raw[0], list):
+            return [float(x) for x in cast(list[float], raw[0])]
+        return [float(x) for x in cast(list[float], raw)]
+    return [float(raw)]
+
+
 def _to_text(obj: Any) -> str:
     if isinstance(obj, str):
         return obj
@@ -121,7 +133,7 @@ def reward(state: Any, action: Any, result: Any) -> float:  # noqa: D401
     sig = _simhash(txt)
 
     if _have_embed:
-        emb: List[float] = _model.encode(txt, normalize_embeddings=True).tolist()
+        emb = _encode_embedding(txt)
 
     with _lock:
         sims: List[float] = []

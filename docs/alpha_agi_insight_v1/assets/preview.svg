@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Alpha AGI Insight preview">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#071324"/>
+      <stop offset="100%" stop-color="#0b5fa5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="240" cy="315" r="110" fill="#2ed3ff" opacity="0.22"/>
+  <circle cx="940" cy="210" r="70" fill="#8bf3ff" opacity="0.24"/>
+  <text x="100" y="300" fill="#e7f7ff" font-size="68" font-family="Arial, Helvetica, sans-serif" font-weight="700">
+    α‑AGI Insight v1
+  </text>
+  <text x="100" y="370" fill="#c6e8ff" font-size="38" font-family="Arial, Helvetica, sans-serif">
+    Beyond Human Foresight
+  </text>
+</svg>
