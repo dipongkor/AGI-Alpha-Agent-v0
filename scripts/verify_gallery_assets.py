@@ -10,8 +10,8 @@ from pathlib import Path
 PREVIEW_RE = re.compile(r"!\[preview\]\(([^)]+)\)")
 
 
-def main() -> int:
-    repo_root = Path(__file__).resolve().parents[1]
+def collect_missing_preview_assets(repo_root: Path) -> list[str]:
+    """Return missing/invalid demo preview asset references."""
     demos_dir = repo_root / "docs" / "demos"
     missing: list[str] = []
 
@@ -29,7 +29,12 @@ def main() -> int:
             expected_dir = repo_root / "docs" / md_file.stem / "assets"
         if not target.is_file() or not target.is_relative_to(expected_dir):
             missing.append(f"{md_file.relative_to(repo_root)}: {target.relative_to(repo_root)}")
+    return missing
 
+
+def main() -> int:
+    repo_root = Path(__file__).resolve().parents[1]
+    missing = collect_missing_preview_assets(repo_root)
     if missing:
         print("Missing preview assets:", file=sys.stderr)
         for item in missing:
