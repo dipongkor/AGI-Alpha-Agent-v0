@@ -31,6 +31,7 @@ Mutation testing in `ci.yml` is config-driven: the workflow always runs `mutmut 
 The Semgrep pre-commit hook is pinned with an explicit `setuptools` additional dependency so Python 3.12 hook environments still provide `pkg_resources` for the OpenTelemetry import path used by Semgrep.
 The merge-surface pytest/docs jobs and other merge validators enforce an npm cache lifecycle contract: when `actions/setup-node` uses `cache: npm` with `NPM_CONFIG_CACHE`, the directory is created before setup-node and is not removed later in the job so setup-node's post-step cache save always has a valid, populated path.
 All merge-surface Python validation jobs (`Ruff + Mypy`, `Pytest`, `MkDocs`, and `Docs Build`) install a shared baseline via `scripts/ci_install_python_baseline.sh` (`requirements.lock` + `requirements-dev.lock`) before job-specific setup (`--include-backend-lock` or `--include-docs-lock`) and before `check_env.py --auto-install`, so 3.11/3.12 environments resolve the same dependency contract.
+The merge-surface Ruff step now resolves tracked Python targets via `scripts/ruff_targets.py --run`, preventing Git metadata paths (for example `.git/refs/...`) from entering lint scope by construction.
 
 ## Branch protection (required checks)
 
