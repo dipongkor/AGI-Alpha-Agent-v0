@@ -62,7 +62,7 @@ try:
     import numpy as np  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover - optional dep
     np = None  # type: ignore
-with contextlib.suppress(ModuleNotFoundError):
+with contextlib.suppress(ModuleNotFoundError, ImportError):
     from sentence_transformers import SentenceTransformer  # type: ignore
 with contextlib.suppress(ModuleNotFoundError):
     import psycopg2  # type: ignore
