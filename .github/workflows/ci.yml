@@ -197,6 +197,8 @@ jobs:
         env:
           PRE_COMMIT_HOME: .cache/pre-commit
           SKIP: eslint-insight-browser
+      - name: Remove pre-commit cache from lint scope
+        run: rm -rf .cache/pre-commit
       - name: Fail on uncommitted changes
         run: |
           git --no-pager diff
@@ -205,7 +207,7 @@ jobs:
             exit 1
           fi
       - name: Ruff lint
-        run: python -m ruff check .
+        run: python -m ruff check --force-exclude .
       - name: Mypy type-check
         # Use configuration defaults to restrict analysis to the src package
         run: python -m mypy --config-file mypy.ini
@@ -387,6 +389,7 @@ jobs:
         shell: bash
         run: |
           python check_env.py --auto-install${WHEELHOUSE:+ --wheelhouse "$WHEELHOUSE"}
+          python -m playwright install chromium
           mkdir -p artifacts/test-reports
           pytest --cov --cov-report=xml:artifacts/coverage.xml --cov-fail-under=80 --junitxml=artifacts/test-reports/pytest.xml
       - name: Mutation tests
@@ -892,8 +895,6 @@ jobs:
         run: python -m playwright install-deps chromium
       - name: Install Playwright browsers (Python)
         run: python -m playwright install chromium
-      - name: Install Playwright browsers (Node)
-        run: npx playwright install
       - name: Verify demo pages
         run: python scripts/verify_demo_pages.py
       - name: Verify Insight PWA offline
