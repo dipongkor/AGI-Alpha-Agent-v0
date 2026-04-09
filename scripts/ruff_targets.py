@@ -12,6 +12,15 @@ from pathlib import Path
 
 PYTHON_FILE_GLOBS: tuple[str, ...] = ("*.py", "*.pyi", "*.ipynb")
 DEFAULT_BATCH_SIZE = 200
+METADATA_PATH_PARTS: frozenset[str] = frozenset(
+    {
+        ".git",
+        ".hg",
+        ".svn",
+        ".cache",
+        "__pycache__",
+    }
+)
 
 
 def _repo_root() -> Path:
@@ -27,12 +36,18 @@ def _repo_root() -> Path:
 
 def list_tracked_python_files(repo_root: Path) -> list[str]:
     """Return tracked Python-related files for Ruff relative to ``repo_root``."""
-    command = ["git", "-C", str(repo_root), "ls-files", "-z", "--", *PYTHON_FILE_GLOBS]
+    command = ["git", "-C", str(repo_root), "ls-files", "--cached", "-z", "--", *PYTHON_FILE_GLOBS]
     result = subprocess.run(command, check=True, capture_output=True)
 
     entries = [item for item in result.stdout.decode("utf-8").split("\x00") if item]
-    filtered = sorted({entry for entry in entries if not entry.startswith(".git/")})
+    filtered = sorted({entry for entry in entries if _is_lintable_path(entry)})
     return filtered
+
+
+def _is_lintable_path(relative_path: str) -> bool:
+    """Return whether ``relative_path`` should be included in Ruff scope."""
+    path = Path(relative_path)
+    return not any(part in METADATA_PATH_PARTS for part in path.parts)
 
 
 def run_ruff(repo_root: Path, targets: list[str], batch_size: int) -> int:
