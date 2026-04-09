@@ -3,7 +3,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts.verify_gallery_assets import collect_missing_preview_assets
+from scripts.verify_gallery_assets import (
+    collect_missing_preview_assets,
+    collect_preview_sync_contract_violations,
+)
 
 
 def _write_demo_page(path: Path, preview_ref: str) -> None:
@@ -50,3 +53,21 @@ def test_repo_contract_includes_insight_preview_asset() -> None:
     assert preview.is_file()
     assert source.is_file()
     assert preview.read_text(encoding="utf-8") == source.read_text(encoding="utf-8")
+    assert collect_preview_sync_contract_violations(repo) == []
+
+
+def test_collect_preview_sync_contract_violations_reports_mismatch(tmp_path: Path) -> None:
+    repo = tmp_path
+    source = repo / "docs" / "alpha_factory_v1" / "demos" / "alpha_agi_insight_v1" / "assets" / "preview.svg"
+    target = repo / "docs" / "alpha_agi_insight_v1" / "assets" / "preview.svg"
+    source.parent.mkdir(parents=True)
+    target.parent.mkdir(parents=True)
+    source.write_text("<svg>source</svg>", encoding="utf-8")
+    target.write_text("<svg>target</svg>", encoding="utf-8")
+
+    assert collect_preview_sync_contract_violations(repo) == [
+        (
+            "preview mismatch: docs/alpha_agi_insight_v1/assets/preview.svg differs from "
+            "docs/alpha_factory_v1/demos/alpha_agi_insight_v1/assets/preview.svg"
+        )
+    ]
