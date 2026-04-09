@@ -44,4 +44,9 @@ def test_repo_contract_includes_insight_preview_asset() -> None:
     repo = Path(__file__).resolve().parents[1]
     missing = collect_missing_preview_assets(repo)
     assert missing == []
-    assert (repo / "docs" / "alpha_agi_insight_v1" / "assets" / "preview.svg").is_file()
+    preview = repo / "docs" / "alpha_agi_insight_v1" / "assets" / "preview.svg"
+    source = repo / "docs" / "alpha_factory_v1" / "demos" / "alpha_agi_insight_v1" / "assets" / "preview.svg"
+
+    assert preview.is_file()
+    assert source.is_file()
+    assert preview.read_text(encoding="utf-8") == source.read_text(encoding="utf-8")

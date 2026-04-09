@@ -147,6 +147,15 @@ if [[ ! -f "$DOCS_DIR/$ICON_FILE" && -f "$BROWSER_DIR/$ICON_FILE" ]]; then
     cp -a "$BROWSER_DIR/$ICON_FILE" "$DOCS_DIR/"
 fi
 
+# Keep gallery preview contract stable even when docs bundle rebuilds from a
+# clean state where this file was accidentally removed.
+PREVIEW_FILE="assets/preview.svg"
+PREVIEW_SRC="$REPO_ROOT/docs/alpha_factory_v1/demos/alpha_agi_insight_v1/$PREVIEW_FILE"
+if [[ ! -f "$DOCS_DIR/$PREVIEW_FILE" && -f "$PREVIEW_SRC" ]]; then
+    mkdir -p "$DOCS_DIR/assets"
+    cp -a "$PREVIEW_SRC" "$DOCS_DIR/$PREVIEW_FILE"
+fi
+
 # Copy Insight API docs into the docs bundle for MkDocs navigation
 INSIGHT_DOCS_SRC="$REPO_ROOT/alpha_factory_v1/demos/alpha_agi_insight_v1/docs"
 INSIGHT_DOCS_DEST="$DOCS_DIR/docs"
