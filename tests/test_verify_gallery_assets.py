@@ -71,3 +71,14 @@ def test_collect_preview_sync_contract_violations_reports_mismatch(tmp_path: Pat
             "docs/alpha_factory_v1/demos/alpha_agi_insight_v1/assets/preview.svg"
         )
     ]
+
+
+def test_collect_preview_sync_contract_violations_reports_missing_mirror(tmp_path: Path) -> None:
+    repo = tmp_path
+    source = repo / "docs" / "alpha_factory_v1" / "demos" / "alpha_agi_insight_v1" / "assets" / "preview.svg"
+    source.parent.mkdir(parents=True)
+    source.write_text("<svg>source</svg>", encoding="utf-8")
+
+    assert collect_preview_sync_contract_violations(repo) == [
+        "missing mirrored preview: docs/alpha_agi_insight_v1/assets/preview.svg"
+    ]
