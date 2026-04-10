@@ -47,7 +47,7 @@ DEFAULT_SMOKE_TARGETED = [
 
 REGISTRY: dict[ValidatorClass, ValidatorPlan] = {
     ValidatorClass.RUFF: ValidatorPlan(
-        targeted=["ruff", "check", "."],
+        targeted=[PYTHON, "scripts/ruff_targets.py", "--run"],
         broader=[PYTHON, "-m", "pytest", "-m", "smoke", "tests/test_ping_agent.py", "tests/test_af_requests.py", "-q"],
     ),
     ValidatorClass.MYPY: ValidatorPlan(
