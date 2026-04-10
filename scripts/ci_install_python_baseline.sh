@@ -25,7 +25,12 @@ while (($#)); do
     shift
 done
 
-python -m pip install --upgrade pip
+#
+# NOTE: keep CI on the latest stable pip 25.x for now. pip 26 introduced
+# resolver/lockfile regressions that can break matrix jobs before lint/test
+# steps run, so we explicitly constrain the installer until the lock pipeline
+# is validated against pip 26.
+python -m pip install --upgrade "pip<26"
 pip install -r requirements.lock
 pip install -r requirements-dev.lock
 
