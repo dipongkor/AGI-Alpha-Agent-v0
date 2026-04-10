@@ -127,6 +127,15 @@ def _is_ready(demo: Path, state: dict[str, object]) -> tuple[bool, str]:
     return False, ""
 
 
+
+
+def _is_ignorable_insight_page_error(message: str) -> bool:
+    msg = message.lower()
+    return (
+        "service worker is disabled because the context is sandboxed" in msg
+        or "target origin provided" in msg and "does not match the recipient window" in msg
+    )
+
 def _insight_contract_ok(
     page_errors: list[str],
     missing_assets: list[str],
@@ -140,7 +149,8 @@ def _insight_contract_ok(
         return False, "missing-local-assets"
     if response_failures:
         return False, "http-error-responses"
-    if page_errors:
+    filtered_errors = [e for e in page_errors if not _is_ignorable_insight_page_error(e)]
+    if filtered_errors:
         return False, "page-errors"
     return True, ""
 

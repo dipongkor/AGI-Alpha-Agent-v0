@@ -30,7 +30,6 @@ import random
 import contextlib
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from datetime import datetime, timezone
-from functools import cached_property
 from typing import Callable, List, Tuple
 
 try:
@@ -182,7 +181,7 @@ class Genome:
     def from_json(js: str | dict) -> "Genome":
         return Genome(**(json.loads(js) if isinstance(js, str) else js))
 
-    @cached_property
+    @property
     def sha(self) -> str:
         return hashlib.sha256(self.to_json().encode()).hexdigest()[:12]
 

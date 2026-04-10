@@ -110,7 +110,15 @@
       const SW_URL = 'service-worker.js';
       const SW_HASH = 'sha384-jNrRb0RaME0Q+lz0/ITUhfnQBDj97uJPtmPXPc9rSfGvo79YnRebfKvL0rUyytDQ';
 
-      if ('serviceWorker' in navigator && !navigator.webdriver) {
+      const serviceWorkerSupported = (() => {
+        try {
+          return Boolean(navigator.serviceWorker);
+        } catch (_err) {
+          return false;
+        }
+      })();
+
+      if (serviceWorkerSupported && !navigator.webdriver) {
         window.addEventListener('load', async () => {
           try {
             const res = await fetch(SW_URL);
