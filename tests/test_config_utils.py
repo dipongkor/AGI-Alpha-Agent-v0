@@ -47,3 +47,9 @@ def test_settings_respects_forced_offline(monkeypatch: pytest.MonkeyPatch) -> No
     settings = cfg.Settings()
     assert settings.openai_api_key == "present"
     assert settings.offline
+
+
+def test_settings_preserve_env_db_type_with_explicit_ledger_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AGI_INSIGHT_DB", "postgres")
+    settings = cfg.Settings(ledger_path="./ledger/custom.db")
+    assert settings.db_type == "postgres"
