@@ -22,9 +22,14 @@ additive hardening to satisfy enterprise infosec & regulator audits.
 """
 from __future__ import annotations
 
-import os, asyncio, logging, time, json, math, tempfile, threading, fcntl
+import os, asyncio, logging, time, json, math, tempfile, threading
 from pathlib import Path
 from typing import Any, Dict
+
+if os.name != "nt":
+    import fcntl
+else:
+    fcntl = None  # type: ignore[assignment]
 
 import uvicorn
 from fastapi import FastAPI, BackgroundTasks, HTTPException
@@ -421,7 +426,7 @@ async def _start_gradio_dashboard() -> None:
     if _gradio_thread and _gradio_thread.is_alive():
         return
 
-    if _gradio_lock_file is None:
+    if _gradio_lock_file is None and fcntl is not None:
         lock_path = Path(tempfile.gettempdir()) / "aiga-gradio.lock"
         lock_file = lock_path.open("w", encoding="utf-8")
         try:
@@ -431,6 +436,8 @@ async def _start_gradio_dashboard() -> None:
             lock_file.close()
             return
         _gradio_lock_file = lock_file
+    elif _gradio_lock_file is None:
+        log.warning("fcntl unavailable on this platform; starting Gradio without inter-process lock")
 
     api_loop = asyncio.get_running_loop()
     _gradio_thread = threading.Thread(
@@ -454,7 +461,7 @@ async def _checkpoint_on_shutdown() -> None:
             log.exception("Failed to close Gradio UI cleanly")
     if _gradio_thread and _gradio_thread.is_alive():
         _gradio_thread.join(timeout=5)
-    if _gradio_lock_file is not None:
+    if _gradio_lock_file is not None and fcntl is not None:
         try:
             fcntl.flock(_gradio_lock_file.fileno(), fcntl.LOCK_UN)
         except OSError:
