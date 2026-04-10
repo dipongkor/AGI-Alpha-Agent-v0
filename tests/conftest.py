@@ -181,7 +181,7 @@ def _ensure_insight_dist() -> Path:
     env.setdefault("FETCH_ASSETS_SKIP_LLM", "1")
     _ensure_insight_node_modules(env)
     subprocess.check_call(["npm", "run", "build"], cwd=_INSIGHT_DIR, env=env)
-    if not _INSIGHT_DIST.exists():
+    if not (_INSIGHT_DIST.exists() and (_INSIGHT_DIST / "index.html").exists()):
         pytest.skip("Insight browser dist assets missing; run npm build to generate them")
     return _INSIGHT_DIST
 

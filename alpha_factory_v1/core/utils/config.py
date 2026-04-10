@@ -137,6 +137,8 @@ class Settings(SettingsBase):
 
     def __init__(self, **data: Any) -> None:  # pragma: no cover - exercised in tests
         super().__init__(**data)
+        if "ledger_path" in data and "db_type" not in data:
+            self.db_type = "sqlite"
         raw = os.getenv("AGI_ISLAND_BACKENDS")
         if raw and not data.get("island_backends"):
             mapping = {}
