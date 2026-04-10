@@ -24,7 +24,12 @@ def _hash_snippet(snippet: str) -> str:
 def _build_base() -> str:
     ipfs_origin = os.environ.get("IPFS_GATEWAY", "")
     otel_origin = os.environ.get("OTEL_ENDPOINT", "")
-    base = "default-src 'self'; connect-src 'self' https://api.openai.com"
+    base = (
+        "default-src 'self'; "
+        "connect-src 'self' https://api.openai.com; "
+        "frame-src 'self' blob:; "
+        "worker-src 'self' blob:"
+    )
     if ipfs_origin:
         base += f" {ipfs_origin}"
     if otel_origin:

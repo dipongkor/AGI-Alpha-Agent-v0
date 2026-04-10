@@ -329,7 +329,7 @@ async function bundle() {
     });
     let outHtml = html;
     const cspBase =
-        "default-src 'self'; connect-src 'self' https://api.openai.com" +
+        "default-src 'self'; connect-src 'self' https://api.openai.com; frame-src 'self' blob:; worker-src 'self' blob:" +
         (ipfsOrigin ? ` ${ipfsOrigin}` : "") +
         (otelOrigin ? ` ${otelOrigin}` : "");
     const envScript = injectEnv(process.env);

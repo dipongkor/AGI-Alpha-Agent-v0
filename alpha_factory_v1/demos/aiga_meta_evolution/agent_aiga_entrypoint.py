@@ -22,7 +22,7 @@ additive hardening to satisfy enterprise infosec & regulator audits.
 """
 from __future__ import annotations
 
-import os, asyncio, signal, logging, time, json, math, tempfile
+import os, asyncio, signal, logging, time, json, math, tempfile, threading
 from pathlib import Path
 from typing import Any, Dict
 
@@ -416,17 +416,14 @@ async def _graceful_exit(*_):
 # MAIN -----------------------------------------------------------------------
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     for sig in (signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(sig, lambda s=sig: asyncio.create_task(_graceful_exit(s)))
 
-    # start Gradio dashboard asynchronously
+    # Start Gradio in a daemon thread so uvicorn can own the main event loop.
     if gr is not None:
-        loop.create_task(_launch_gradio())
+        threading.Thread(target=lambda: asyncio.run(_launch_gradio()), daemon=True).start()
     else:
         log.info("Skipping Gradio startup")
 
