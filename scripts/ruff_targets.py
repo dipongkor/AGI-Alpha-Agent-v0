@@ -25,19 +25,25 @@ METADATA_PATH_PARTS: frozenset[str] = frozenset(
 
 def _repo_root() -> Path:
     """Return the current Git repository root path."""
-    result = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError:
+        return Path.cwd()
     return Path(result.stdout.strip())
 
 
 def list_tracked_python_files(repo_root: Path) -> list[str]:
     """Return tracked Python-related files for Ruff relative to ``repo_root``."""
     command = ["git", "-C", str(repo_root), "ls-files", "--cached", "-z", "--", *PYTHON_FILE_GLOBS]
-    result = subprocess.run(command, check=True, capture_output=True)
+    try:
+        result = subprocess.run(command, check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        return _walk_python_files(repo_root)
 
     entries = [item for item in result.stdout.decode("utf-8").split("\x00") if item]
     filtered = sorted({entry for entry in entries if _is_lintable_path(entry)})
@@ -48,6 +54,20 @@ def _is_lintable_path(relative_path: str) -> bool:
     """Return whether ``relative_path`` should be included in Ruff scope."""
     path = Path(relative_path)
     return not any(part in METADATA_PATH_PARTS for part in path.parts)
+
+
+def _walk_python_files(repo_root: Path) -> list[str]:
+    """Return Python files from filesystem walk when Git metadata is unavailable."""
+    discovered: set[str] = set()
+    for pattern in PYTHON_FILE_GLOBS:
+        for path in repo_root.rglob(pattern):
+            try:
+                rel = path.relative_to(repo_root).as_posix()
+            except ValueError:
+                continue
+            if _is_lintable_path(rel):
+                discovered.add(rel)
+    return sorted(discovered)
 
 
 def run_ruff(repo_root: Path, targets: list[str], batch_size: int) -> int:

@@ -209,3 +209,11 @@ def test_mypy_validator_plan_matches_ci_scope() -> None:
 
     plan = get_plan(ValidatorClass.MYPY)
     assert plan.targeted == ["mypy", "--config-file", "mypy.ini"]
+
+
+def test_ruff_validator_plan_matches_ci_scope() -> None:
+    from alpha_factory_v1.demos.self_healing_repo.repo_healer_v1 import validators
+    from alpha_factory_v1.demos.self_healing_repo.repo_healer_v1.validators import get_plan
+
+    plan = get_plan(ValidatorClass.RUFF)
+    assert plan.targeted == [validators.PYTHON, "scripts/ruff_targets.py", "--run"]

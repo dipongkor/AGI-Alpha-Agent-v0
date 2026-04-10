@@ -570,7 +570,7 @@ def test_build_bundle_sets_reproduction_and_risk_tier(tmp_path: Path, monkeypatc
     monkeypatch.setattr(ci_bundle, "_api_get", fake_api_get)
     bundle = build_failure_bundle(event_path, repository="org/repo", token="token")
 
-    assert bundle.reproduction_command == ["ruff", "check", "."]
+    assert bundle.reproduction_command == [ci_bundle.sys.executable, "scripts/ruff_targets.py", "--run"]
     assert bundle.risk_tier == "tier1"
 
 

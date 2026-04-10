@@ -122,7 +122,7 @@ def _collect_junit_signals(junit_path: pathlib.Path) -> list[FailureSignal]:
 
 def _default_reproduction_command(validator: ValidatorClass, candidate_files: list[str]) -> list[str]:
     if validator == ValidatorClass.RUFF:
-        return ["ruff", "check", "."]
+        return [sys.executable, "scripts/ruff_targets.py", "--run"]
     if validator == ValidatorClass.MYPY:
         return ["mypy", "--config-file", "mypy.ini"]
     if validator == ValidatorClass.IMPORT:

@@ -6,7 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-from scripts.ruff_targets import list_tracked_python_files
+from scripts.ruff_targets import _repo_root, list_tracked_python_files
 
 
 def _git(cwd: Path, *args: str) -> None:
@@ -57,3 +57,36 @@ def test_list_tracked_python_files_filters_metadata_paths(monkeypatch: Any, tmp_
 
     assert "--cached" in captured["cmd"]
     assert targets == ["docs/readme.pyi", "src/good.py"]
+
+
+def test_list_tracked_python_files_falls_back_without_git_index(monkeypatch: Any, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "pkg").mkdir()
+    (repo / "pkg" / "ok.py").write_text("x = 1\n", encoding="utf-8")
+    (repo / ".git" / "refs").mkdir(parents=True)
+    (repo / ".git" / "refs" / "bad.py").write_text("deadbeef\n", encoding="utf-8")
+
+    def fake_run(cmd: list[str], check: bool, capture_output: bool) -> SimpleNamespace:
+        raise subprocess.CalledProcessError(returncode=128, cmd=cmd)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    targets = list_tracked_python_files(repo)
+
+    assert targets == ["pkg/ok.py"]
+
+
+def test_repo_root_falls_back_to_cwd_when_git_unavailable(monkeypatch: Any, tmp_path: Path) -> None:
+    original_cwd = Path.cwd()
+
+    def fake_run(*_args: Any, **_kwargs: Any) -> SimpleNamespace:
+        raise subprocess.CalledProcessError(returncode=128, cmd=["git", "rev-parse"])
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    try:
+        import os
+
+        os.chdir(tmp_path)
+        assert _repo_root() == tmp_path
+    finally:
+        os.chdir(original_cwd)

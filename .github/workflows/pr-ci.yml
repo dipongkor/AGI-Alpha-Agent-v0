@@ -49,7 +49,7 @@ jobs:
           pip install -r requirements.lock
           pip install -r requirements-dev.lock
       - name: Ruff check
-        run: python -m ruff check .
+        run: python scripts/ruff_targets.py --run
 
   smoke:
     name: "Smoke tests"
