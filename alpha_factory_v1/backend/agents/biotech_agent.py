@@ -54,6 +54,7 @@ import json
 import logging
 import os
 import random
+import re
 import textwrap
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -238,7 +239,17 @@ class _EmbedStore:
         if not self._docs:
             return []
         if self._index is None:
-            return [(txt, meta, 0.0) for txt, meta in list(zip(self._docs, self._meta, strict=False))[:k]]
+            query_terms = {t for t in re.findall(r"[a-z0-9]+", query.lower()) if len(t) > 1}
+            if not query_terms:
+                return []
+            scored: List[Tuple[int, int, str, str]] = []
+            for i, (txt, meta) in enumerate(zip(self._docs, self._meta, strict=False)):
+                haystack = f"{txt} {meta}".lower()
+                overlap = sum(1 for term in query_terms if term in haystack)
+                if overlap > 0:
+                    scored.append((overlap, i, txt, meta))
+            scored.sort(key=lambda item: (-item[0], item[1]))
+            return [(txt, meta, float(score)) for score, _, txt, meta in scored[:k]]
         vec = await self._embed([query])
         scores, idx = self._index.search(vec, k)
         return [(self._docs[i], self._meta[i], float(scores[0][j])) for j, i in enumerate(idx[0]) if i != -1]
