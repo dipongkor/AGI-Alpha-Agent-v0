@@ -127,11 +127,10 @@ def _is_ready(demo: Path, state: dict[str, object]) -> tuple[bool, str]:
     return False, ""
 
 
-
-
 def _is_ignorable_insight_page_error(message: str) -> bool:
     msg = message.lower()
     return "service worker is disabled because the context is sandboxed" in msg
+
 
 def _insight_contract_ok(
     page_errors: list[str],

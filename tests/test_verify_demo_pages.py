@@ -80,15 +80,12 @@ def test_insight_contract_requires_clean_runtime() -> None:
     assert _insight_contract_ok([], ["missing.js"], [], []) == (False, "missing-local-assets")
     assert _insight_contract_ok([], [], ["x -> 404"], []) == (False, "http-error-responses")
     assert _insight_contract_ok(["TypeError"], [], [], []) == (False, "page-errors")
-    assert (
-        _insight_contract_ok(
-            ["Failed to execute 'postMessage': The target origin provided does not match the recipient window's origin"],
-            [],
-            [],
-            [],
-        )
-        == (False, "page-errors")
-    )
+    assert _insight_contract_ok(
+        ["Failed to execute 'postMessage': The target origin provided does not match the recipient window's origin"],
+        [],
+        [],
+        [],
+    ) == (False, "page-errors")
 
 
 def test_missing_required_assets_detects_insight_contract_files(tmp_path) -> None:
