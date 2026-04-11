@@ -183,10 +183,8 @@ class _EmbedStore:
     """Incremental FAISS index with pluggable embedder (OpenAI or SBERT)."""
 
     def __init__(self, cfg: BTConfig):
-        if faiss is None:
-            raise RuntimeError("faiss is required for BiotechAgent.")
         self.cfg = cfg
-        self._index: faiss.IndexFlatIP = faiss.IndexFlatIP(cfg.embed_dim)
+        self._index: Optional[Any] = faiss.IndexFlatIP(cfg.embed_dim) if faiss is not None else None
         self._docs: List[str] = []  # raw text
         self._meta: List[str] = []  # URI or doc-id
         self._embedder = None  # lazy initialised
@@ -207,6 +205,8 @@ class _EmbedStore:
             self._embedder = await loop.run_in_executor(None, SentenceTransformer, "nomic-embed-text")
 
     async def _embed(self, batch: List[str]) -> "np.ndarray":
+        if np is None:
+            raise RuntimeError("numpy is required for embeddings.")
         await self._ensure_embedder()
         if self._embedder == "openai":  # OpenAI API
             resp = await openai.Embedding.acreate(model="text-embedding-3-small", input=batch, encoding_format="float")
@@ -219,19 +219,26 @@ class _EmbedStore:
             loop = asyncio.get_event_loop()
             vecs = await loop.run_in_executor(None, self._embedder.encode, batch)  # type: ignore
             vecs = vecs.astype("float32")
-        faiss.normalize_L2(vecs)
+        if faiss is not None:
+            faiss.normalize_L2(vecs)
+        else:
+            norms = np.linalg.norm(vecs, axis=1, keepdims=True)
+            vecs = vecs / np.clip(norms, 1e-12, None)
         return vecs
 
     # ── public ───────────────────────────────────────────────────────────
     async def add(self, texts: List[str], meta: List[str]):
-        vecs = await self._embed(texts)
-        self._index.add(vecs)
+        if self._index is not None:
+            vecs = await self._embed(texts)
+            self._index.add(vecs)
         self._docs.extend(texts)
         self._meta.extend(meta)
 
     async def search(self, query: str, k: int = 6) -> List[Tuple[str, str, float]]:
         if not self._docs:
             return []
+        if self._index is None:
+            return [(txt, meta, 0.0) for txt, meta in list(zip(self._docs, self._meta, strict=False))[:k]]
         vec = await self._embed([query])
         scores, idx = self._index.search(vec, k)
         return [(self._docs[i], self._meta[i], float(scores[0][j])) for j, i in enumerate(idx[0]) if i != -1]
