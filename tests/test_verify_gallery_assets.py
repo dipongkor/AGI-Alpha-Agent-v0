@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from scripts.verify_gallery_assets import (
+    PREVIEW_RE,
     collect_missing_preview_assets,
     collect_preview_sync_contract_violations,
 )
@@ -82,3 +83,15 @@ def test_collect_preview_sync_contract_violations_reports_missing_mirror(tmp_pat
     assert collect_preview_sync_contract_violations(repo) == [
         "missing mirrored preview: docs/alpha_agi_insight_v1/assets/preview.svg"
     ]
+
+
+def test_insight_demo_markdown_points_to_mirrored_preview_asset() -> None:
+    repo = Path(__file__).resolve().parents[1]
+    demo_md = repo / "docs" / "demos" / "alpha_agi_insight_v1.md"
+    match = PREVIEW_RE.search(demo_md.read_text(encoding="utf-8"))
+    assert match is not None
+    preview_ref = match.group(1).split("#", 1)[0]
+    assert preview_ref == "../alpha_agi_insight_v1/assets/preview.svg"
+    preview_target = (demo_md.parent / preview_ref).resolve()
+    assert preview_target == (repo / "docs" / "alpha_agi_insight_v1" / "assets" / "preview.svg").resolve()
+    assert preview_target.is_file()
