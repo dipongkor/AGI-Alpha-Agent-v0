@@ -20,3 +20,10 @@ def test_pr_ci_ruff_step_uses_target_script() -> None:
     assert "name: Ruff check" in workflow
     assert "run: python scripts/ruff_targets.py --run" in workflow
     assert "run: python -m ruff check ." not in workflow
+
+
+def test_ruff_exclude_contains_git_metadata() -> None:
+    pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
+
+    assert "exclude = [" in pyproject
+    assert '".git"' in pyproject
