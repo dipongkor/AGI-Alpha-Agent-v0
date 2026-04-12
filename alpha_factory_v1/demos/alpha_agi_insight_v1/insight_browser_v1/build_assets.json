@@ -8,7 +8,8 @@
     "src/utils/rng.js",
     "sw.js",
     "manifest.json",
-    "favicon.svg"
+    "favicon.svg",
+    "bootstrap.js"
   ],
   "dirs": {
     "translations": "src/i18n",
@@ -27,7 +28,8 @@
     "data/critics/*",
     "src/i18n/*.json",
     "src/i18n/zh.json",
-    "insight_browser_quickstart.pdf"
+    "insight_browser_quickstart.pdf",
+    "bootstrap.js"
   ],
   "assets": [
     "wasm/pyodide.js",
