@@ -78,6 +78,7 @@ line-length = 120
 target-version = "py311"
 exclude = [
     ".cache",
+    ".git",
     # exclude all demo directories except MuZero planning
     "alpha_factory_v1/demos/aiga_meta_evolution/*",
     "alpha_factory_v1/demos/alpha_agi_business_2_v1/*",
