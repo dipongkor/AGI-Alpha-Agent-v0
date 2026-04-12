@@ -1214,7 +1214,7 @@ jobs:
       - name: Upload release assets
         # NOTE: v2.6.1 is the latest published release. Upstream still runs on
         # Node20, so keep this pin and track Node24 migration as follow-up debt.
-        uses: softprops/action-gh-release@v2.6.1 # 153bb8e04406b158c6c84fc1615b65b24149a1fe
+        uses: softprops/action-gh-release@v3.0.0 # b4309332981a82ec1c5618f44dd2e27cc8bfbfda
         with:
           files: web-client.tar.gz
       - name: Rollback on failure
