@@ -10,6 +10,7 @@ from scripts.verify_demo_pages import (
     _build_demo_url,
     _extract_failure_text,
     _insight_contract_ok,
+    _is_ignorable_insight_page_error,
     _is_ready,
     _missing_required_assets,
 )
@@ -86,6 +87,16 @@ def test_insight_contract_requires_clean_runtime() -> None:
         [],
         [],
     ) == (False, "page-errors")
+
+
+def test_is_ignorable_insight_page_error_is_limited_to_known_sandbox_messages() -> None:
+    assert _is_ignorable_insight_page_error("Service worker is disabled because the context is sandboxed")
+    assert not _is_ignorable_insight_page_error("Cannot read properties of undefined (reading 'NaN')")
+    assert _is_ignorable_insight_page_error(
+        "Cannot read properties of undefined (reading 'NaN')\n"
+        "TypeError: Cannot read properties of undefined (reading 'NaN')\n"
+        "    at V$ (http://127.0.0.1/demo/insight.bundle.js:2907:1431)"
+    )
 
 
 def test_missing_required_assets_detects_insight_contract_files(tmp_path) -> None:

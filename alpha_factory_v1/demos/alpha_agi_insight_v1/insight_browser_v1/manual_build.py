@@ -386,14 +386,26 @@ otel_origin = os.getenv("OTEL_ENDPOINT")
 if otel_origin:
     p = urlparse(otel_origin)
     otel_origin = f"{p.scheme}://{p.netloc}"
+connect_src = [
+    "'self'",
+    "https://api.openai.com",
+    "https://api.web3.storage",
+    "https://w3s.link",
+    "https://*.w3s.link",
+    "https://ipfs.io",
+    "https://dweb.link",
+]
 csp_base = (
     "default-src 'self'; connect-src 'self' https://api.openai.com https://api.web3.storage https://ipfs.io; "
     "frame-src 'self' blob:; worker-src 'self' blob:"
 )
 if ipfs_origin:
-    csp_base += f" {ipfs_origin}"
+    connect_src.append(ipfs_origin)
 if otel_origin:
-    csp_base += f" {otel_origin}"
+    connect_src.append(otel_origin)
+csp_base = (
+    "default-src 'self'; " f"connect-src {' '.join(connect_src)}; " "frame-src 'self' blob:; worker-src 'self' blob:"
+)
 
 copy_assets(manifest, repo_root, dist_dir)
 if quickstart_pdf.exists():
