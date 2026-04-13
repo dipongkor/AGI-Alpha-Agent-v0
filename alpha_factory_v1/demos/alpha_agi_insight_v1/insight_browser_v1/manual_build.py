@@ -387,7 +387,8 @@ if otel_origin:
     p = urlparse(otel_origin)
     otel_origin = f"{p.scheme}://{p.netloc}"
 csp_base = (
-    "default-src 'self'; connect-src 'self' https://api.openai.com; " "frame-src 'self' blob:; worker-src 'self' blob:"
+    "default-src 'self'; connect-src 'self' https://api.openai.com https://api.web3.storage https://ipfs.io; "
+    "frame-src 'self' blob:; worker-src 'self' blob:"
 )
 if ipfs_origin:
     csp_base += f" {ipfs_origin}"
