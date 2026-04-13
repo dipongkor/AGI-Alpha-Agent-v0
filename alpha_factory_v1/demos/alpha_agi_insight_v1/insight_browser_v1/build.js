@@ -329,7 +329,17 @@ async function bundle() {
     });
     let outHtml = html;
     const connectSrc =
-        ["'self'", "https://api.openai.com", ipfsOrigin, otelOrigin]
+        [
+            "'self'",
+            "https://api.openai.com",
+            "https://api.web3.storage",
+            "https://w3s.link",
+            "https://*.w3s.link",
+            "https://ipfs.io",
+            "https://dweb.link",
+            ipfsOrigin,
+            otelOrigin,
+        ]
             .filter(Boolean)
             .join(" ");
     const cspBase = `default-src 'self'; connect-src ${connectSrc}; frame-src 'self' blob:; worker-src 'self' blob:`;

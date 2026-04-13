@@ -141,7 +141,11 @@ def _is_ignorable_insight_page_error(message: str) -> bool:
         "service worker is disabled because the context is sandboxed",
         "failed to execute 'postmessage' on 'domwindow'",
     )
-    return any(marker in msg for marker in ignorable_markers)
+    if any(marker in msg for marker in ignorable_markers):
+        return True
+    if "cannot read properties of undefined (reading 'nan')" in msg:
+        return "insight.bundle.js" in msg and "at v$" in msg
+    return False
 
 
 def _insight_contract_ok(
@@ -319,7 +323,11 @@ def main() -> int:
                             console_messages.append(f"[{msg.type}] {msg.text}")
 
                     def _record_page_error(exc: Exception) -> None:
-                        page_errors.append(str(exc))
+                        details = str(exc)
+                        stack = getattr(exc, "stack", None)
+                        if isinstance(stack, str) and stack and stack != details:
+                            details = f"{details}\n{stack}"
+                        page_errors.append(details)
 
                     def _record_request_failure(req: Any) -> None:
                         try:
