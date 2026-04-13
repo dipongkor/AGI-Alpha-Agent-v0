@@ -395,6 +395,10 @@ connect_src = [
     "https://ipfs.io",
     "https://dweb.link",
 ]
+csp_base = (
+    "default-src 'self'; connect-src 'self' https://api.openai.com https://api.web3.storage https://ipfs.io; "
+    "frame-src 'self' blob:; worker-src 'self' blob:"
+)
 if ipfs_origin:
     connect_src.append(ipfs_origin)
 if otel_origin:

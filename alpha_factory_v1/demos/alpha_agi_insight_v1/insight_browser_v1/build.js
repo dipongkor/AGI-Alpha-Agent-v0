@@ -337,6 +337,7 @@ async function bundle() {
             "https://*.w3s.link",
             "https://ipfs.io",
             "https://dweb.link",
+            "https://ipfs.io",
             ipfsOrigin,
             otelOrigin,
         ]
