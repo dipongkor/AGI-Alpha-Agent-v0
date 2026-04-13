@@ -158,10 +158,12 @@ class AgentRunner:
 
     @staticmethod
     def _resolve_get_agent():
+        agents_mod = sys.modules.get("backend.agents")
+        if agents_mod is not None and not hasattr(agents_mod, "__path__") and hasattr(agents_mod, "get_agent"):
+            return agents_mod.get_agent
         registry_mod = sys.modules.get("backend.agents.registry")
         if registry_mod is not None and hasattr(registry_mod, "get_agent"):
             return registry_mod.get_agent
-        agents_mod = sys.modules.get("backend.agents")
         if agents_mod is not None and hasattr(agents_mod, "get_agent"):
             return agents_mod.get_agent
         from backend.agents.registry import get_agent
