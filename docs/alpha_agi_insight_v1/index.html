@@ -82,6 +82,11 @@
     <script src="bootstrap.js"></script>
 
     <script type="module" src="insight.bundle.js" integrity="sha384-Mb1VRv2DyAqBUMvCGGI6/e90gepYQ9/zjE2rAa8wRVbmwPWSFsW3zIMomuaVkHeh" crossorigin="anonymous"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("service-worker.js").catch(() => {});
+      }
+    </script>
   <script>window.PINNER_TOKEN=atob('');window.OTEL_ENDPOINT=atob('');window.IPFS_GATEWAY=atob('');</script>
 </body>
 </html>
