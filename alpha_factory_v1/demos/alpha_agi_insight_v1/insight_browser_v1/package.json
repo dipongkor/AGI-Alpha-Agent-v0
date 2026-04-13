@@ -9,6 +9,7 @@
   "scripts": {
     "preinstall": "node -e \"const m=parseInt(process.versions.node); if(m<22){console.error('Node.js 22+ is required. Current version: '+process.versions.node); process.exit(1);} \"",
     "lint": "eslint --config eslint.config.js src --ext .js,.ts",
+    "build:docs-insight": "node build.js",
     "build": "node build.js",
     "fetch-assets": "node -e \"console.log('Using PYODIDE_BASE_URL:', process.env.PYODIDE_BASE_URL)\" && python ../../../../scripts/fetch_assets.py",
     "build:dist": "npm run build && cd dist && cp sw.js service-worker.js && zip -r ../insight_browser.zip index.html insight.bundle.js service-worker.js style.css insight_browser_quickstart.pdf d3.exports.js && zip -r ../insight_browser.zip assets && rm service-worker.js",
