@@ -3,9 +3,9 @@ import os
 from pathlib import Path
 import requests  # type: ignore[import-untyped]
 
-import requests_mock
-
 import pytest
+
+requests_mock = pytest.importorskip("requests_mock")
 
 import scripts.download_openai_gpt2 as dg
 
