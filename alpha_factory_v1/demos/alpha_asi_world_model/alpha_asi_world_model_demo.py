@@ -45,6 +45,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
+
 try:
     import torch
     import torch.nn as nn
@@ -341,7 +342,6 @@ if torch is not None:
         def forward(self, x):
             return torch.tanh(self.l(x))
 
-
     class Dyn(nn.Module):
         def __init__(self, hidden: int, act_dim: int):
             super().__init__()
@@ -352,7 +352,6 @@ if torch is not None:
             x = torch.cat([h, a], -1)
             return self.r(x), torch.tanh(self.h(x))
 
-
     class Pred(nn.Module):
         def __init__(self, hidden: int, act_dim: int):
             super().__init__()
@@ -361,7 +360,6 @@ if torch is not None:
 
         def forward(self, h):
             return self.v(h), torch.log_softmax(self.p(h), -1)
-
 
     class MuZeroTiny(nn.Module):
         def __init__(self, obs_dim: int, act_dim: int):
@@ -379,7 +377,6 @@ if torch is not None:
             r, h2 = self.dyn(h, a_onehot)
             v, p = self.pred(h2)
             return h2, r, v, p
-
 
     # -------------------------------- MCTS -----------------------------------
     def mcts_policy(net: MuZeroTiny, obs: np.ndarray, simulations: int = 16) -> int:
@@ -399,12 +396,14 @@ if torch is not None:
             W[a] += q
         best = int(np.argmax(W / (N + 1e-8)))
         return best
+
 else:
 
     class MuZeroTiny:  # pragma: no cover - only used when torch missing
         def __init__(self, *_: Any, **__: Any) -> None:
-            raise RuntimeError("PyTorch is required for MuZeroTiny. Install torch to enable learner/orchestrator features.")
-
+            raise RuntimeError(
+                "PyTorch is required for MuZeroTiny. Install torch to enable learner/orchestrator features."
+            )
 
     def mcts_policy(*_: Any, **__: Any) -> int:  # pragma: no cover - only used when torch missing
         raise RuntimeError("PyTorch is required for MCTS policy evaluation.")
