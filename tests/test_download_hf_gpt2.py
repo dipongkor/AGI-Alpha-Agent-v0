@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 import os
 from pathlib import Path
-import requests_mock
 import pytest
+
+requests_mock = pytest.importorskip("requests_mock")
 
 import scripts.download_hf_gpt2 as dg
 
