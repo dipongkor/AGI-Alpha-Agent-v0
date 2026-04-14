@@ -42,13 +42,19 @@ import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch import optim
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    from torch import optim
+except ImportError:  # pragma: no cover - optional dependency path
+    torch = None  # type: ignore[assignment]
+    nn = None  # type: ignore[assignment]
+    F = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
 
 try:
     import yaml  # soft‑dep; config file
@@ -71,7 +77,8 @@ LOG = logging.getLogger("alpha_asi_demo")
 _SEED = int(os.getenv("ALPHA_ASI_SEED", "42"))
 random.seed(_SEED)
 np.random.seed(_SEED)
-torch.manual_seed(_SEED)
+if torch is not None:
+    torch.manual_seed(_SEED)
 
 
 def _set_seed(val: int) -> None:
@@ -79,7 +86,8 @@ def _set_seed(val: int) -> None:
     _SEED = val
     random.seed(val)
     np.random.seed(val)
-    torch.manual_seed(val)
+    if torch is not None:
+        torch.manual_seed(val)
 
 
 # =============================================================================
@@ -96,7 +104,7 @@ class Config:
     ui_tick: int = 100
     max_steps: int = 200_000
     mcts_simulations: int = 16
-    device: str = "cuda" if torch.cuda.is_available() else "cpu"
+    device: str = "cuda" if torch is not None and torch.cuda.is_available() else "cpu"
     log_json: bool = False
     host: str = "127.0.0.1"
     port: int = 7860
@@ -153,7 +161,7 @@ def _load_cfg() -> Config:
             setattr(cfg, k, val)
     # map 'auto' → 'cuda' if available else 'cpu'
     if isinstance(cfg.device, str) and cfg.device.lower() == "auto":
-        cfg.device = "cuda" if torch.cuda.is_available() else "cpu"
+        cfg.device = "cuda" if torch is not None and torch.cuda.is_available() else "cpu"
     try:
         seed = int(seed_raw)
     except Exception:  # pragma: no cover - rarely triggered
@@ -321,72 +329,83 @@ while len(AGENTS) < 5:
 # =============================================================================
 # 4.  MuZeroTiny with lightweight MCTS
 # =============================================================================
-class Repr(nn.Module):
-    def __init__(self, input_dim: int, hidden: int):
-        super().__init__()
-        self.l = nn.Linear(input_dim, hidden)
+if torch is not None:
 
-    def forward(self, x):
-        return torch.tanh(self.l(x))
+    class Repr(nn.Module):
+        def __init__(self, input_dim: int, hidden: int):
+            super().__init__()
+            self.l = nn.Linear(input_dim, hidden)
 
-
-class Dyn(nn.Module):
-    def __init__(self, hidden: int, act_dim: int):
-        super().__init__()
-        self.r = nn.Linear(hidden + act_dim, 1)
-        self.h = nn.Linear(hidden + act_dim, hidden)
-
-    def forward(self, h, a):
-        x = torch.cat([h, a], -1)
-        return self.r(x), torch.tanh(self.h(x))
+        def forward(self, x):
+            return torch.tanh(self.l(x))
 
 
-class Pred(nn.Module):
-    def __init__(self, hidden: int, act_dim: int):
-        super().__init__()
-        self.v = nn.Linear(hidden, 1)
-        self.p = nn.Linear(hidden, act_dim)
+    class Dyn(nn.Module):
+        def __init__(self, hidden: int, act_dim: int):
+            super().__init__()
+            self.r = nn.Linear(hidden + act_dim, 1)
+            self.h = nn.Linear(hidden + act_dim, hidden)
 
-    def forward(self, h):
-        return self.v(h), torch.log_softmax(self.p(h), -1)
-
-
-class MuZeroTiny(nn.Module):
-    def __init__(self, obs_dim: int, act_dim: int):
-        super().__init__()
-        self.repr = Repr(obs_dim, CFG.hidden)
-        self.dyn = Dyn(CFG.hidden, act_dim)
-        self.pred = Pred(CFG.hidden, act_dim)
-
-    def initial(self, obs):
-        h = self.repr(obs)
-        v, p = self.pred(h)
-        return h, v, p
-
-    def recurrent(self, h, a_onehot):
-        r, h2 = self.dyn(h, a_onehot)
-        v, p = self.pred(h2)
-        return h2, r, v, p
+        def forward(self, h, a):
+            x = torch.cat([h, a], -1)
+            return self.r(x), torch.tanh(self.h(x))
 
 
-# -------------------------------- MCTS ---------------------------------------
-def mcts_policy(net: MuZeroTiny, obs: np.ndarray, simulations: int = 16) -> int:
-    """Very small UCB‑based MCTS on top of MuZeroTiny."""
-    act_dim = 4
-    with torch.no_grad():
-        h, v0, p0 = net.initial(torch.tensor(obs, device=CFG.device, dtype=torch.float32))
-    N = np.zeros(act_dim)
-    W = np.zeros(act_dim)
-    P = p0.exp().cpu().numpy()
-    for _ in range(simulations):
-        a = np.argmax(P * (np.sqrt(N.sum() + 1e-8) / (1 + N)))
-        a_one = F.one_hot(torch.tensor(a), num_classes=act_dim).float().to(CFG.device)
-        h2, r, v, p = net.recurrent(h, a_one)
-        q = (r + v).item()
-        N[a] += 1
-        W[a] += q
-    best = int(np.argmax(W / (N + 1e-8)))
-    return best
+    class Pred(nn.Module):
+        def __init__(self, hidden: int, act_dim: int):
+            super().__init__()
+            self.v = nn.Linear(hidden, 1)
+            self.p = nn.Linear(hidden, act_dim)
+
+        def forward(self, h):
+            return self.v(h), torch.log_softmax(self.p(h), -1)
+
+
+    class MuZeroTiny(nn.Module):
+        def __init__(self, obs_dim: int, act_dim: int):
+            super().__init__()
+            self.repr = Repr(obs_dim, CFG.hidden)
+            self.dyn = Dyn(CFG.hidden, act_dim)
+            self.pred = Pred(CFG.hidden, act_dim)
+
+        def initial(self, obs):
+            h = self.repr(obs)
+            v, p = self.pred(h)
+            return h, v, p
+
+        def recurrent(self, h, a_onehot):
+            r, h2 = self.dyn(h, a_onehot)
+            v, p = self.pred(h2)
+            return h2, r, v, p
+
+
+    # -------------------------------- MCTS -----------------------------------
+    def mcts_policy(net: MuZeroTiny, obs: np.ndarray, simulations: int = 16) -> int:
+        """Very small UCB‑based MCTS on top of MuZeroTiny."""
+        act_dim = 4
+        with torch.no_grad():
+            h, v0, p0 = net.initial(torch.tensor(obs, device=CFG.device, dtype=torch.float32))
+        N = np.zeros(act_dim)
+        W = np.zeros(act_dim)
+        P = p0.exp().cpu().numpy()
+        for _ in range(simulations):
+            a = np.argmax(P * (np.sqrt(N.sum() + 1e-8) / (1 + N)))
+            a_one = F.one_hot(torch.tensor(a), num_classes=act_dim).float().to(CFG.device)
+            h2, r, v, p = net.recurrent(h, a_one)
+            q = (r + v).item()
+            N[a] += 1
+            W[a] += q
+        best = int(np.argmax(W / (N + 1e-8)))
+        return best
+else:
+
+    class MuZeroTiny:  # pragma: no cover - only used when torch missing
+        def __init__(self, *_: Any, **__: Any) -> None:
+            raise RuntimeError("PyTorch is required for MuZeroTiny. Install torch to enable learner/orchestrator features.")
+
+
+    def mcts_policy(*_: Any, **__: Any) -> int:  # pragma: no cover - only used when torch missing
+        raise RuntimeError("PyTorch is required for MCTS policy evaluation.")
 
 
 # =============================================================================
@@ -468,6 +487,8 @@ class Learner:
 
     def __init__(self, env: MiniWorld):
         """Initialize the learner for ``env``."""
+        if torch is None or optim is None or F is None:
+            raise RuntimeError("PyTorch is required for Learner. Install torch to run the world model training loop.")
         self.net = MuZeroTiny(env.size**2, 4).to(CFG.device)
         self.opt = optim.Adam(self.net.parameters(), CFG.lr)
         self.buffer: List[Tuple[np.ndarray, float]] = []
