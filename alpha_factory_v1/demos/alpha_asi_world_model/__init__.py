@@ -34,11 +34,18 @@ from typing import Final, List
 
 # Re-export the runnable demo components
 try:  # optional heavy deps (numpy, torch, etc.)
-    from .alpha_asi_world_model_demo import CFG, Orchestrator, app, _main as _demo_cli  # noqa: F401
+    from .alpha_asi_world_model_demo import (  # noqa: F401
+        CFG,
+        TORCH_AVAILABLE,
+        Orchestrator,
+        _main as _demo_cli,
+        app,
+    )
 
-    _DEPS_AVAILABLE = True
+    _DEPS_AVAILABLE = bool(TORCH_AVAILABLE)
 except Exception:  # pragma: no cover - missing optional deps
     CFG = Orchestrator = app = _demo_cli = None  # type: ignore
+    TORCH_AVAILABLE = False
     _DEPS_AVAILABLE = False
 
 __all__: Final[List[str]] = [

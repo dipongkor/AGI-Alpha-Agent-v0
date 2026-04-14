@@ -56,6 +56,8 @@ except ImportError:  # pragma: no cover - optional dependency path
     F = None  # type: ignore[assignment]
     optim = None  # type: ignore[assignment]
 
+TORCH_AVAILABLE = torch is not None
+
 try:
     import yaml  # soft‑dep; config file
 except ImportError:
