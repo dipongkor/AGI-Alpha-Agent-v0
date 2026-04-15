@@ -35,16 +35,19 @@ global.document = documentMock;
 global.URL = URLMock;
 global.location = { origin: 'http://example.com' };
 
-test('messages from other origins are ignored', async () => {
+test('messages are accepted only from the sandbox iframe window', async () => {
   const p = createSandboxWorker('x.js');
   iframeMock.onload();
   const w = await p;
   let count = 0;
   w.onmessage = () => { count += 1; };
 
-  lastHandler({ source: iframeMock.contentWindow, origin: 'http://evil.com', data: 'bad' });
+  lastHandler({ source: {}, origin: 'http://example.com', data: 'bad' });
   assert.equal(count, 0);
 
-  lastHandler({ source: iframeMock.contentWindow, origin: 'http://example.com', data: 'good' });
+  lastHandler({ source: iframeMock.contentWindow, origin: 'http://evil.com', data: 'bad' });
   assert.equal(count, 1);
+
+  lastHandler({ source: iframeMock.contentWindow, origin: 'http://example.com', data: 'good' });
+  assert.equal(count, 2);
 });
