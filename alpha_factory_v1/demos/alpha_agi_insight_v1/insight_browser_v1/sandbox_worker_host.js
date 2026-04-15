@@ -12,9 +12,9 @@ window.addEventListener('message', (event) => {
     if (worker) {
       worker.terminate();
     }
-    worker = new Worker(data.url, { type: 'module' });
+    worker = new window.Worker(data.url, { type: 'module' });
     worker.onmessage = (messageEvent) => {
-      parent.postMessage(messageEvent.data, '*');
+      window.parent.postMessage(messageEvent.data, '*');
     };
     return;
   }
