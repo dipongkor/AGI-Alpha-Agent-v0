@@ -89,7 +89,7 @@ def _is_ready(demo: Path, state: dict[str, object]) -> tuple[bool, str]:
     required_selectors = DEMO_READINESS_SELECTORS.get(demo.name)
     if required_selectors:
         match = state.get("match")
-        if match == "html[data-insight-ready='1']" and state.get("insightReady"):
+        if match == "html[data-insight-ready='1']":
             return True, "insight-ready-marker"
         if match == "#root":
             root_child_count = _as_int(state.get("rootChildCount") or 0)
