@@ -510,11 +510,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         missing_required.append("google_adk")
     missing = missing_required + missing_optional
     if missing:
-        print("WARNING: Missing packages:", ", ".join(missing))
-        for pkg in missing_optional:
-            hint = OPTIONAL_HINTS.get(pkg)
-            if hint:
-                print("  -", hint)
+        if missing_required:
+            print("WARNING: Missing required packages:", ", ".join(missing_required))
+        if missing_optional:
+            print("INFO: Optional integrations unavailable:", ", ".join(missing_optional))
+            for pkg in missing_optional:
+                hint = OPTIONAL_HINTS.get(pkg)
+                if hint:
+                    print("  -", hint)
         if not google_adk_attr_ok:
             hint = OPTIONAL_HINTS.get("google_adk")
             if hint:
