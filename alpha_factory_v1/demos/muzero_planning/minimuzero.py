@@ -8,7 +8,7 @@ import random
 
 try:
     import numpy as np  # for policy arrays when torch absent
-except ModuleNotFoundError:  # pragma: no cover - optional dependency
+except (ModuleNotFoundError, OSError):  # pragma: no cover - optional dependency
     np = None
 try:
     import gymnasium as gym
@@ -41,7 +41,7 @@ try:
     import torch.nn.functional as F
 
     _TORCH = True
-except ModuleNotFoundError:  # pragma: no cover - optional dependency
+except (ModuleNotFoundError, OSError):  # pragma: no cover - optional dependency
     _TORCH = False
 from dataclasses import dataclass
 from typing import Dict, List, Sequence, Tuple

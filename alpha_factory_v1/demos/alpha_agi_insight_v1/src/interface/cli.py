@@ -270,7 +270,7 @@ def simulate(
             import numpy as np  # type: ignore
 
             np.random.seed(seed)
-        with contextlib.suppress(ModuleNotFoundError):
+        with contextlib.suppress(ModuleNotFoundError, OSError):
             import torch  # type: ignore
 
             torch.manual_seed(seed)

@@ -8,7 +8,10 @@ import sys
 
 import pytest
 
-pytest.importorskip("torch")
+try:
+    import torch  # noqa: F401
+except (ImportError, OSError):
+    pytest.skip("torch is unavailable or broken", allow_module_level=True)
 
 
 def test_bool_env_override(monkeypatch, non_network: None) -> None:
