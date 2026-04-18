@@ -43,7 +43,7 @@ try:
     import torch.nn.functional as F
 
     _TORCH = True
-except ModuleNotFoundError:  # pragma: no cover - CPU-only stub
+except (ModuleNotFoundError, OSError):  # pragma: no cover - CPU-only stub
     import types
 
     torch = types.SimpleNamespace(

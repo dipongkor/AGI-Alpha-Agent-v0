@@ -51,7 +51,7 @@ try:
     import torch.nn as nn
     import torch.nn.functional as F
     from torch import optim
-except ImportError:  # pragma: no cover - optional dependency path
+except (ImportError, OSError):  # pragma: no cover - optional dependency path
     torch = None  # type: ignore[assignment]
     nn = None  # type: ignore[assignment]
     F = None  # type: ignore[assignment]
