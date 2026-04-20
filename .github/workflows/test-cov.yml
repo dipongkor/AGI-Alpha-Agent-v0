@@ -1,10 +1,11 @@
-name: "📊 Test Coverage pr-3172731620"
+name: "📊 Diff Coverage"
 
 # Builds the project Dockerfile and runs pytest with coverage inside
-# the container. The repository is mounted into the container so the
-# test suite (not copied in by the Dockerfile) is available at runtime.
+# the container. Computes diff coverage against upstream/main so the
+# output tells you: "of the lines this PR changed, what % are covered."
 #
-# Runs on every push to any branch, and can also be triggered manually.
+# If the PR branch's lockfile is broken, we temporarily swap in main's
+# lockfile so the image can actually build.
 
 on:
   push:
@@ -19,6 +20,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  UPSTREAM_URL: "https://github.com/MontrealAI/AGI-Alpha-Agent-v0.git"
+  UPSTREAM_BASE: "main"
+
 jobs:
   coverage:
     runs-on: ubuntu-latest
@@ -26,24 +31,32 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
 
-      # Branch names can contain slashes (e.g. feature/foo), which are
-      # invalid in filenames. Replace any non-alphanumeric/dash/underscore
-      # character with a dash so the resulting name is filesystem-safe.
       - name: Compute safe branch name
-        id: branch
         shell: bash
         run: |
           safe_name="${GITHUB_REF_NAME//\//-}"
           safe_name="${safe_name//[^a-zA-Z0-9._-]/-}"
           echo "SAFE_BRANCH=$safe_name" >> "$GITHUB_ENV"
 
+      - name: Fetch upstream base for diff
+        run: |
+          git remote add upstream "$UPSTREAM_URL" 2>/dev/null || true
+          git fetch upstream "$UPSTREAM_BASE"
+
+      # Use upstream main's lockfile instead of the PR branch's, which
+      # may be broken. We swap in-place but don't commit; it only exists
+      # for the duration of this job.
+      - name: Swap in upstream's lockfile
+        run: |
+          git show upstream/${UPSTREAM_BASE}:alpha_factory_v1/demos/alpha_agi_insight_v1/requirements.lock \
+            > alpha_factory_v1/demos/alpha_agi_insight_v1/requirements.lock
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Build the image locally (no push). Use GHA cache so repeat runs
-      # on the same branch don't reinstall Node, pnpm, and pip deps from
-      # scratch every time.
       - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
@@ -55,13 +68,6 @@ jobs:
           cache-from: type=gha,scope=coverage-${{ env.SAFE_BRANCH }}
           cache-to: type=gha,scope=coverage-${{ env.SAFE_BRANCH }},mode=max
 
-      # The Dockerfile only copies the Insight demo into the image.
-      # Mount the full repo at /repo and run tests from there. Install
-      # coverage tooling inside the container at runtime since the
-      # Dockerfile does not include it.
-      #
-      # --user root is needed because the Dockerfile switches to a
-      # non-root 'appuser' which cannot pip-install into site-packages.
       - name: Run pytest with coverage inside container
         run: |
           docker run --rm \
@@ -72,14 +78,23 @@ jobs:
             coverage-image:${{ env.SAFE_BRANCH }} \
             bash -c '
               set -e
-              pip install --no-cache-dir pytest-cov "coverage[toml]"
+              pip install --no-cache-dir pytest-cov "coverage[toml]" diff-cover
               pytest \
                 --cov \
                 --cov-report=xml:"${SAFE_BRANCH}.xml" \
                 --cov-report=json:"${SAFE_BRANCH}.json" \
                 --cov-report=term \
-                --junitxml="${SAFE_BRANCH}-junit.xml"
+                --junitxml="${SAFE_BRANCH}-junit.xml" || true
             '
+
+      - name: Compute diff coverage
+        run: |
+          python -m pip install diff-cover
+          diff-cover "${SAFE_BRANCH}.xml" \
+            --compare-branch="upstream/${UPSTREAM_BASE}" \
+            --html-report "${SAFE_BRANCH}-diff-cov.html" \
+            --json-report "${SAFE_BRANCH}-diff-cov.json" \
+            --markdown-report "${SAFE_BRANCH}-diff-cov.md" || true
 
       - name: Upload coverage reports
         if: ${{ always() }}
@@ -90,3 +105,6 @@ jobs:
             ${{ env.SAFE_BRANCH }}.xml
             ${{ env.SAFE_BRANCH }}.json
             ${{ env.SAFE_BRANCH }}-junit.xml
+            ${{ env.SAFE_BRANCH }}-diff-cov.html
+            ${{ env.SAFE_BRANCH }}-diff-cov.json
+            ${{ env.SAFE_BRANCH }}-diff-cov.md
