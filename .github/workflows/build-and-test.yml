@@ -45,7 +45,6 @@ jobs:
 
       - name: Install project dependencies
         run: |
-          pip install -r requirements.lock -r requirements-dev.lock
           python check_env.py --auto-install${WHEELHOUSE:+ --wheelhouse "$WHEELHOUSE"}
 
       # check_env.py installs runtime deps but not coverage tooling.
