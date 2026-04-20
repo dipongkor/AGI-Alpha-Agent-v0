@@ -1,10 +1,14 @@
 name: "📊 Test Coverage"
 
 # This workflow runs the test suite and collects coverage information.
-# It must be triggered manually via the "Run workflow" button and
-# executes only when the GitHub actor matches the repository owner.
+# It runs automatically on every push to any branch, and can also be
+# triggered manually via the "Run workflow" button. The owner-check
+# job gates execution to the repository owner.
 
 on:
+  push:
+    branches:
+      - '**'
   workflow_dispatch:
 
 permissions:
@@ -27,6 +31,7 @@ jobs:
   coverage:
     needs: owner-check
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -38,17 +43,37 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'requirements.lock'
 
+      # Branch names can contain slashes (e.g. feature/foo), which are
+      # invalid in filenames. Replace any non-alphanumeric/dash/underscore
+      # character with a dash so the resulting name is filesystem-safe.
+      - name: Compute safe branch name
+        id: branch
+        shell: bash
+        run: |
+          safe_name="${GITHUB_REF_NAME//\//-}"
+          safe_name="${safe_name//[^a-zA-Z0-9._-]/-}"
+          echo "SAFE_BRANCH=$safe_name" >> "$GITHUB_ENV"
+
       - name: Install dependencies
         run: |
           python check_env.py --auto-install${WHEELHOUSE:+ --wheelhouse "$WHEELHOUSE"}
 
       - name: Run pytest with coverage
         run: |
-          pytest --cov --cov-report=xml:coverage.xml --cov-report=term --cov-fail-under=80
+          pytest \
+            --cov \
+            --cov-report=xml:"${SAFE_BRANCH}.xml" \
+            --cov-report=json:"${SAFE_BRANCH}.json" \
+            --cov-report=term \
+            --cov-fail-under=80 \
+            --junitxml="${SAFE_BRANCH}-junit.xml"
 
-      - name: Upload coverage report
+      - name: Upload coverage reports
         if: ${{ always() }}
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: coverage-xml
-          path: coverage.xml
+          name: coverage-reports-${{ env.SAFE_BRANCH }}
+          path: |
+            ${{ env.SAFE_BRANCH }}.xml
+            ${{ env.SAFE_BRANCH }}.json
+            ${{ env.SAFE_BRANCH }}-junit.xml
