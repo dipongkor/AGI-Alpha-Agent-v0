@@ -1,9 +1,10 @@
 name: "📊 Test Coverage pr-3172731620"
 
-# This workflow runs the test suite and collects coverage information.
-# It runs automatically on every push to any branch, and can also be
-# triggered manually via the "Run workflow" button. The owner-check
-# job gates execution to the repository owner.
+# Builds the project Dockerfile and runs pytest with coverage inside
+# the container. The repository is mounted into the container so the
+# test suite (not copied in by the Dockerfile) is available at runtime.
+#
+# Runs on every push to any branch, and can also be triggered manually.
 
 on:
   push:
@@ -26,13 +27,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3.11"
-          cache: 'pip'
-          cache-dependency-path: 'requirements.lock'
-
       # Branch names can contain slashes (e.g. feature/foo), which are
       # invalid in filenames. Replace any non-alphanumeric/dash/underscore
       # character with a dash so the resulting name is filesystem-safe.
@@ -44,48 +38,48 @@ jobs:
           safe_name="${safe_name//[^a-zA-Z0-9._-]/-}"
           echo "SAFE_BRANCH=$safe_name" >> "$GITHUB_ENV"
 
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      # Install pinned runtime deps first so later steps work from a known
-      # baseline. If requirements.lock is missing on this branch, skip it.
-      - name: Install locked runtime dependencies
+      # Build the image locally (no push). Use GHA cache so repeat runs
+      # on the same branch don't reinstall Node, pnpm, and pip deps from
+      # scratch every time.
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          tags: coverage-image:${{ env.SAFE_BRANCH }}
+          load: true
+          push: false
+          cache-from: type=gha,scope=coverage-${{ env.SAFE_BRANCH }}
+          cache-to: type=gha,scope=coverage-${{ env.SAFE_BRANCH }},mode=max
+
+      # The Dockerfile only copies the Insight demo into the image.
+      # Mount the full repo at /repo and run tests from there. Install
+      # coverage tooling inside the container at runtime since the
+      # Dockerfile does not include it.
+      #
+      # --user root is needed because the Dockerfile switches to a
+      # non-root 'appuser' which cannot pip-install into site-packages.
+      - name: Run pytest with coverage inside container
         run: |
-          if [ -f requirements.lock ]; then
-            python -m pip install -r requirements.lock
-          else
-            echo "::notice::requirements.lock not present; skipping."
-          fi
-
-      # Dev deps (pytest, linters, typically pytest-cov). Skip if missing.
-      - name: Install dev dependencies
-        run: |
-          if [ -f requirements-dev.txt ]; then
-            python -m pip install -r requirements-dev.txt
-          else
-            echo "::notice::requirements-dev.txt not present; skipping."
-          fi
-
-      # Guarantee coverage tooling exists regardless of what the branch's
-      # requirements files happen to contain.
-      - name: Install coverage tooling
-        run: python -m pip install pytest-cov "coverage[toml]"
-
-      # Run the project's env checker last so it can repair any version
-      # mismatches introduced by the steps above (e.g. stale
-      # typing_extensions pulled in by a lockfile).
-      - name: Verify and repair environment
-        run: |
-          python check_env.py --auto-install${WHEELHOUSE:+ --wheelhouse "$WHEELHOUSE"}
-
-      - name: Run pytest with coverage
-        run: |
-          pytest \
-            --cov \
-            --cov-report=xml:"${SAFE_BRANCH}.xml" \
-            --cov-report=json:"${SAFE_BRANCH}.json" \
-            --cov-report=term \
-            --junitxml="${SAFE_BRANCH}-junit.xml"
+          docker run --rm \
+            --user root \
+            -v "$PWD":/repo \
+            -w /repo \
+            -e SAFE_BRANCH="$SAFE_BRANCH" \
+            coverage-image:${{ env.SAFE_BRANCH }} \
+            bash -c '
+              set -e
+              pip install --no-cache-dir pytest-cov "coverage[toml]"
+              pytest \
+                --cov \
+                --cov-report=xml:"${SAFE_BRANCH}.xml" \
+                --cov-report=json:"${SAFE_BRANCH}.json" \
+                --cov-report=term \
+                --junitxml="${SAFE_BRANCH}-junit.xml"
+            '
 
       - name: Upload coverage reports
         if: ${{ always() }}
