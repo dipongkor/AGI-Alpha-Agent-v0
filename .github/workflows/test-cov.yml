@@ -1,0 +1,43 @@
+name: "Research: Tests & Coverage"
+
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: 'requirements.lock'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.lock -r requirements-dev.lock
+          pip install pytest-cov
+          python check_env.py --auto-install || true  # ignore known bug
+
+      - name: Run tests with coverage
+        run: |
+          pytest --cov --cov-report=html --cov-report=xml --cov-report=json
+        continue-on-error: true  # don't fail job if tests fail — you want the data
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-py${{ matrix.python-version }}
+          path: |
+            coverage.xml
+            test-results.xml
+            .coverage
