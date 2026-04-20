@@ -26,7 +26,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest --cov --cov-report=xml --cov-report=term-missing -ra -v --junitxml=test-results.xml
+          pytest --cov --cov-report=html --cov-report=xml --cov-report=json
         continue-on-error: true  # don't fail job if tests fail — you want the data
 
       - name: Upload artifacts
