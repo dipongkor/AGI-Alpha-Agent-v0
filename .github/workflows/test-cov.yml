@@ -44,18 +44,39 @@ jobs:
           safe_name="${safe_name//[^a-zA-Z0-9._-]/-}"
           echo "SAFE_BRANCH=$safe_name" >> "$GITHUB_ENV"
 
-      - name: Install dependencies
-        run: |
-          python check_env.py --auto-install || true
-          python -m pip install -r requirements-dev.txt
-          python -m pip install -r requirements.lock
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
 
-      # Install coverage tooling explicitly so --cov* flags are recognised
-      # regardless of whether the branch's requirements.lock includes them.
-      - name: Install coverage tooling
+      # Install pinned runtime deps first so later steps work from a known
+      # baseline. If requirements.lock is missing on this branch, skip it.
+      - name: Install locked runtime dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest-cov
+          if [ -f requirements.lock ]; then
+            python -m pip install -r requirements.lock
+          else
+            echo "::notice::requirements.lock not present; skipping."
+          fi
+
+      # Dev deps (pytest, linters, typically pytest-cov). Skip if missing.
+      - name: Install dev dependencies
+        run: |
+          if [ -f requirements-dev.txt ]; then
+            python -m pip install -r requirements-dev.txt
+          else
+            echo "::notice::requirements-dev.txt not present; skipping."
+          fi
+
+      # Guarantee coverage tooling exists regardless of what the branch's
+      # requirements files happen to contain.
+      - name: Install coverage tooling
+        run: python -m pip install pytest-cov "coverage[toml]"
+
+      # Run the project's env checker last so it can repair any version
+      # mismatches introduced by the steps above (e.g. stale
+      # typing_extensions pulled in by a lockfile).
+      - name: Verify and repair environment
+        run: |
+          python check_env.py --auto-install${WHEELHOUSE:+ --wheelhouse "$WHEELHOUSE"}
 
       - name: Run pytest with coverage
         run: |
