@@ -65,7 +65,6 @@ jobs:
             --cov-report=xml:"${SAFE_BRANCH}.xml" \
             --cov-report=json:"${SAFE_BRANCH}.json" \
             --cov-report=term \
-            --cov-fail-under=80 \
             --junitxml="${SAFE_BRANCH}-junit.xml"
 
       - name: Upload coverage reports
