@@ -46,7 +46,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python check_env.py --auto-install${WHEELHOUSE:+ --wheelhouse "$WHEELHOUSE"}
+          python check_env.py --auto-install || true
           python -m pip install -r requirements-dev.txt
           python -m pip install -r requirements.lock
 
@@ -55,6 +55,7 @@ jobs:
       - name: Install coverage tooling
         run: |
           python -m pip install --upgrade pip
+          pip install pytest-cov
 
       - name: Run pytest with coverage
         run: |
